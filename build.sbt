@@ -1,4 +1,4 @@
-name := "vexriscv-accel-api"
+name := "VexRiscv-CCOPI"
 
 version := "1.0"
 
