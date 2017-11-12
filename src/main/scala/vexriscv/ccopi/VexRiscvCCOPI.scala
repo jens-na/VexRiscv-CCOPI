@@ -5,6 +5,6 @@ import spinal.core.Component
 /**
   * Base component for a VexRiscv accelerator.
   */
-class VexRiscvAccel extends Component {
+class VexRiscvCCOPI extends Component {
 
 }
