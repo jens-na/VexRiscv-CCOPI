@@ -1,4 +1,4 @@
-package vexriscv.accel
+package vexriscv.ccopi
 
 import spinal.core._
 
