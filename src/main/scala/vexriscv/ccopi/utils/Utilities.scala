@@ -9,5 +9,6 @@ import vexriscv.ccopi.comm.BaseFunction
 class Utilities {
 
   def getAnnotatedPattern(o : BaseFunction) : MaskedLiteral = {
+    null
   }
 }

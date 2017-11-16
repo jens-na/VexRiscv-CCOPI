@@ -1,13 +1,12 @@
-name := "VexRiscv-CCOPI"
-
-organization := "com.github.jensna"
-
-version := "1.0"
-
-scalaVersion := "2.12.1"
-
-libraryDependencies ++= Seq(
-  "com.github.spinalhdl" % "spinalhdl-core_2.11" % "0.10.15",
-  "com.github.spinalhdl" % "spinalhdl-lib_2.11" % "0.10.15"
-)
-        
+lazy val root = (project in file(".")).
+  settings(
+    inThisBuild(List(
+      organization := "com.github.spinalhdl",
+      scalaVersion := "2.11.6",
+      version      := "0.1.0-SNAPSHOT"
+    )),
+    name := "VexRiscv-CCOPI",
+    version := "1.0"
+  ).dependsOn(vexRiscv)
+lazy val vexRiscv = RootProject(uri("git://github.com/SpinalHDL/VexRiscv.git"))
+//lazy val vexRiscv = RootProject(uri("git://github.com/SpinalHDL/VexRiscv.git#commitHash"))

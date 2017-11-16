@@ -18,8 +18,10 @@ import vexriscv.ccopi.comm._
   * @param description The description of the function
   * @param pattern The instruction pattern to  which the area is tied
   */
-case class InstrFunc(name : String,
-                     description : String,
-                     pattern : MaskedLiteral) extends StaticAnnotation
+class InstrFunc(name : String = "[unnamed]",
+                description : String = "[no description]",
+                pattern : MaskedLiteral) extends StaticAnnotation {
+
+}
 
 
