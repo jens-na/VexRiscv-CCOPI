@@ -8,5 +8,10 @@ lazy val root = (project in file(".")).
     name := "VexRiscv-CCOPI",
     version := "1.0"
   ).dependsOn(vexRiscv)
+
 lazy val vexRiscv = RootProject(uri("git://github.com/SpinalHDL/VexRiscv.git"))
 //lazy val vexRiscv = RootProject(uri("git://github.com/SpinalHDL/VexRiscv.git#commitHash"))
+
+libraryDependencies ++= Seq(
+  "org.scalatest" %% "scalatest" % "3.0.4" % "test"
+)
