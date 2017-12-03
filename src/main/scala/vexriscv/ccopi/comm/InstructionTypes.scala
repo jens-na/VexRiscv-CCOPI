@@ -1,16 +1,16 @@
-package vexriscv.ccopi.comm
+package vexriscv.ccopi.utils
 
 import spinal.core._
 
 /**
   * The Base class for a CCOPI command.
   */
-class CCOPICmd extends Bundle with Data
+class CCOPICmd extends Bundle
 
 /**
   * The Base class for a CCOPI response.
   */
-class CCOPIRsp extends Bundle with Data
+class CCOPIRsp extends Bundle
 
 class CCOPICmdRType extends CCOPICmd {
   val funct = Bits(7 bits)
