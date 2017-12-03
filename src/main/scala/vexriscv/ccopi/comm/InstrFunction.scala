@@ -1,7 +1,7 @@
 package vexriscv.ccopi.comm
 import spinal.core._
 import spinal.lib._
-import vexriscv.ccopi.utils.CCOPIRsp
+import vexriscv.VexRiscv
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -9,6 +9,7 @@ abstract class InstrBaseFunction extends Area {
   val name : String = "[unnamed]"
   val description : String = "[no description]"
   val pattern : MaskedLiteral
+
   def build() : Unit
 
   override def toString(): String = {

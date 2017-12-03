@@ -2,8 +2,8 @@ package vexriscv.ccopi.comm
 
 
 import scala.collection.mutable.ArrayBuffer
-import vexriscv.ccopi.utils._
 import spinal.core._
+import vexriscv.VexRiscv
 /**
   * Created by jens on 28.11.17.
   */

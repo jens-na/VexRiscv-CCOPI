@@ -1,8 +1,8 @@
 package vexriscv.ccopi
 
 import spinal.core._
+import vexriscv.VexRiscv
 import vexriscv.ccopi.comm._
-import vexriscv.ccopi.utils.CCOPIRsp
 
 /**
   * Created by jens on 28.11.17.

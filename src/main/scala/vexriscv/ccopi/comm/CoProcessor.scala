@@ -46,7 +46,9 @@ class CoProcessor(compUnits : Seq[CompUnit]) extends Plugin[VexRiscv] {
 
   override def build(pipeline: VexRiscv): Unit = {
 
-    compUnits.foreach(_.build())
+    compUnits.foreach { u =>
+      u.build()
+    }
 
     // Interconnect with vexrisv
   }
