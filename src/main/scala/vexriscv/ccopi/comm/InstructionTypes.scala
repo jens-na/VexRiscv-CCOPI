@@ -25,6 +25,17 @@ package vexriscv.ccopi.comm
 import spinal.core._
 
 /**
+  * The custom RISC-V opcodes as described in
+  * the user level ISA v2.2 opcode mapping
+  */
+object CustomOpcodes {
+  val custom0 = "0001011"
+  val custom1 = "0101011"
+  val custom2 = "1011011"
+  val custom3 = "1111011"
+}
+
+/**
   * The Base class for a CCOPI command.
   */
 class CCOPICmd extends Bundle

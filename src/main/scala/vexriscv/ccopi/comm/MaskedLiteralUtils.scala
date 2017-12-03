@@ -22,46 +22,21 @@
  */
 package vexriscv.ccopi.comm
 
-import spinal.core._
-import spinal.lib._
-import vexriscv.VexRiscv
+import spinal.core.MaskedLiteral
 
-import scala.collection.mutable.ArrayBuffer
-
-abstract class InstrBaseFunction extends Area {
-  val name : String = "[unnamed]"
-  val description : String = "[no description]"
-  val pattern : String
-
-
-  def build() : Unit
-
-  override def toString(): String = {
-    s"[ ${name}, ${description}, ${pattern.toString()}"
-  }
-}
-
-/**
-  * Created by jens on 28.11.17.
-  */
-abstract class InstrFunction[A <: CCOPICmd, B <: CCOPIRsp](dtCmd : A, dtRsp : B) extends InstrBaseFunction {
-  val cmd = slave Stream (dtCmd)
-  val rsp = master Stream (dtRsp)
-  var events = ArrayBuffer[InstrEvent]()
-
-  events ++= List.fill(2)(new InstrEvent())
-  val incoming :: working :: Nil = events.toList
-
-  def build() : Unit
+object MaskedLiteralUtils {
 
   /**
-    * Implicit class to create the areas for each
-    * instruction event
-    * @param ev the event to define
+    * Converts a `String` into a Spinal `MaskedLiteral` object. Can
+    * be used to on any String instance.
+    *
+    * Example:
+    * {{{
+    * "---010".asMaskedLiteral
+    * }}}
+    * @param s the string to convert
     */
-  implicit class implicitsEvent(ev: InstrEvent){
-    def event[T <: Area](area : T) : T = {area.setCompositeName(ev,getName()).reflectNames();area}
+  implicit class MaskedLiteralConversion(val s : String) {
+    def asMaskedLiteral : MaskedLiteral = MaskedLiteral.apply(s)
   }
-
-  Component.current.addPrePopTask(() => build())
 }

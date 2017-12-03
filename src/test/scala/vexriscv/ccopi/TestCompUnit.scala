@@ -23,7 +23,7 @@
 package vexriscv.ccopi
 
 import spinal.core._
-import vexriscv.VexRiscv
+import vexriscv.ccopi.comm.CustomOpcodes._
 import vexriscv.ccopi.comm._
 
 /**
@@ -32,7 +32,7 @@ import vexriscv.ccopi.comm._
 class TestCompUnit extends Component with CompUnit {
 
   def f0 = new InstrFunction[CCOPICmd, CCOPIRsp](new CCOPICmd(), new CCOPIRsp()) {
-    val pattern = M"----00000"
+    val pattern = s"0000001----------000-----${custom0}"
     override val name = "f0"
 
     def build(): Unit = {
@@ -40,7 +40,7 @@ class TestCompUnit extends Component with CompUnit {
   }
 
   def f1 = new InstrFunction[CCOPICmd, CCOPIRsp](new CCOPICmd(), new CCOPIRsp()) {
-    val pattern = M"----00000"
+    val pattern = s"0000010----------000-----${custom0}"
     override val name = "f1"
 
     def build(): Unit = {

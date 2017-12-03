@@ -25,6 +25,7 @@ package vexriscv.ccopi.comm
 import spinal.core._
 import vexriscv.{DecoderService, Stage, Stageable, VexRiscv}
 import vexriscv.plugin.Plugin
+import vexriscv.ccopi.comm.MaskedLiteralUtils._
 
 /**
   * The VexRiscv co-processor plugin for a list of computation
@@ -53,7 +54,7 @@ class CoProcessor(compUnits : Seq[CompUnit]) extends Plugin[VexRiscv] {
     for( (f, s) <- stageables) {
       decoder.addDefault(s, False)
       decoder.add(
-        key = f.pattern,
+        key = f.pattern.asMaskedLiteral,
         List(
           s -> True,
           REGFILE_WRITE_VALID -> True,
@@ -82,4 +83,5 @@ class CoProcessor(compUnits : Seq[CompUnit]) extends Plugin[VexRiscv] {
   private def checkOverlappingPattern(functions : Seq[InstrBaseFunction]) : Unit = {
 
   }
+
 }
