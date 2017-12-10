@@ -25,6 +25,7 @@ package vexriscv.ccopi.comm
 import spinal.core._
 import vexriscv.{DecoderService, Stage, Stageable, VexRiscv}
 import vexriscv.plugin.Plugin
+import vexriscv.ccopi.comm._
 import vexriscv.ccopi.comm.MaskedLiteralUtils._
 
 /**
@@ -35,23 +36,24 @@ import vexriscv.ccopi.comm.MaskedLiteralUtils._
   */
 class CoProcessor(compUnits : Seq[CompUnit]) extends Plugin[VexRiscv] {
 
+  // Collect functions to create
+  val functions = compUnits.map(u => u.functions.toList).flatten
+
+  // Create singelton stageables
+  val stageables = functions.map { f =>
+    object stageable extends Stageable(Bool)
+    f -> stageable
+  }
+
   override def setup(pipeline: VexRiscv): Unit = {
     import pipeline.config._
 
     compUnits.foreach(u => u.setup())
-    val functions = compUnits.map(u => u.functions.toList).flatten
-
     checkOverlappingPattern(functions)
-
-    // Create singelton stageables
-    val stageables = functions.map { f =>
-      object stageable extends Stageable(Bool)
-      f -> stageable
-    }
 
     // Register at decoder service
     val decoder = pipeline.service(classOf[DecoderService])
-    for( (f, s) <- stageables) {
+    for((f, s) <- stageables) {
       decoder.addDefault(s, False)
       decoder.add(
         key = f.pattern.asMaskedLiteral,
@@ -68,12 +70,40 @@ class CoProcessor(compUnits : Seq[CompUnit]) extends Plugin[VexRiscv] {
   }
 
   override def build(pipeline: VexRiscv): Unit = {
+    import pipeline._
+    import pipeline.config._
 
-    compUnits.foreach { u =>
-      u.build()
+    execute plug new Area {
+      import execute._
+
+      for( (func, stageable) <- stageables) {
+
+        // When pattern matches, fire gets True
+        val fire = arbitration.isValid && input(stageable)
+
+        func.io.cmd.valid := False
+        func.io.cmd.payload.assignFromBits(execute.input(INSTRUCTION))
+
+        when(fire) {
+          func.io.cmd.valid := !arbitration.isStuckByOthers && !arbitration.removeIt
+          arbitration.haltItself := memory.arbitration.isValid && memory.input(stageable)
+        }
+      }
     }
 
-    // Interconnect with vexrisv
+    memory plug new Area {
+      import memory._
+
+      for( (func, stageable) <- stageables) {
+        func.io.rsp.ready := !arbitration.isStuckByOthers
+
+        when(arbitration.isValid && input(stageable)) {
+          arbitration.haltItself := !func.io.rsp.valid
+
+          input(REGFILE_WRITE_DATA) := func.io.rsp.payload.asBits
+        }
+      }
+    }
   }
 
   /**

@@ -28,35 +28,39 @@ import vexriscv.VexRiscv
 
 import scala.collection.mutable.ArrayBuffer
 
-abstract class InstrBaseFunction extends Area {
-  val name : String = "[unnamed]"
-  val description : String = "[no description]"
+trait InstrFunc {
   val pattern : String
 
+  var events = ArrayBuffer[InstrEvent]()
+  events ++= List.fill(2)(new InstrEvent())
+  val incoming :: prepare :: Nil = events.toList
 
   def build() : Unit
+}
+
+abstract class InstrBaseFunction extends Area with InstrFunc {
 
   override def toString(): String = {
-    s"[ ${name}, ${description}, ${pattern.toString()}"
+    s"[ pattern=${pattern.toString()}"
   }
 }
 
-/**
-  * Created by jens on 28.11.17.
-  */
-abstract class InstrFunction[A <: CCOPICmd, B <: CCOPIRsp](dtCmd : A, dtRsp : B) extends InstrBaseFunction {
-  val cmd = slave Stream (dtCmd)
-  val rsp = master Stream (dtRsp)
-  var events = ArrayBuffer[InstrEvent]()
+abstract case class InstrFunction[A <: CCOPICmd, B <: CCOPIRsp](dtCmd : A, dtRsp : B) extends InstrBaseFunction {
+  val io = new Bundle {
+    val cmd = slave Stream (dtCmd)
+    val rsp = master Stream (dtRsp)
+  }
 
-  events ++= List.fill(2)(new InstrEvent())
-  val incoming :: working :: Nil = events.toList
+  // Signal which handles the response of the Stream bus
+  private val flushRsp = RegInit(False)
+  io.rsp.valid := flushRsp
+
+  io.cmd.ready := False
 
   def build() : Unit
 
   /**
-    * Implicit class to create the areas for each
-    * instruction event
+    * Implicit class to create the areas for each instruction event
     * @param ev the event to define
     */
   implicit class implicitsEvent(ev: InstrEvent){

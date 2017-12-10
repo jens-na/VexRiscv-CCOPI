@@ -29,13 +29,11 @@ import vexriscv.VexRiscv
 
 abstract trait CompUnit {
 
-  val functions = new ArrayBuffer[InstrBaseFunction]
+  val functions = new ArrayBuffer[InstrFunction[CCOPICmd, CCOPIRsp]]
 
   def setup() : Unit
 
   def build() : Unit = {
-    setup
-
     assert(
       assertion = functions.length != 0,
       message = s"Computation unit '${this.getClass.getSimpleName}' has no activated functions"
@@ -46,9 +44,9 @@ abstract trait CompUnit {
     }
   }
 
-  def activate(func: InstrBaseFunction*) : Unit = {
+  def activate(func: InstrFunction[CCOPICmd, CCOPIRsp]*) : Unit = {
     functions ++= func
   }
 
-  Component.current.addPrePopTask(() => build())
+//  Component.current.addPrePopTask(() => build())
 }

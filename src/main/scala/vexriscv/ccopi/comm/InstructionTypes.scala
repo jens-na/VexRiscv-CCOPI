@@ -53,4 +53,3 @@ class CCOPICmdRType extends CCOPICmd {
   val rd = Bits(5 bits)
   val opcode = Bits(7 bits)
 }
-
