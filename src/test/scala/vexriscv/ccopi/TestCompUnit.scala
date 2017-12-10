@@ -33,15 +33,22 @@ class TestCompUnit extends Component with CompUnit {
 
   def f0 = new InstrFunction[CCOPICmd, CCOPIRsp](new CCOPICmd(), new CCOPIRsp()) {
     val pattern = s"0000001----------000-----${custom0}"
-    override val name = "f0"
 
     def build(): Unit = {
+
+      val x = prepare event new Area {
+        val internalReg = Mem(Bits(32 bits), 4) // internal 128-bits
+      }
+
+      incoming event new Area {
+
+      }
+
     }
   }
 
   def f1 = new InstrFunction[CCOPICmd, CCOPIRsp](new CCOPICmd(), new CCOPIRsp()) {
     val pattern = s"0000010----------000-----${custom0}"
-    override val name = "f1"
 
     def build(): Unit = {
     }
@@ -49,5 +56,9 @@ class TestCompUnit extends Component with CompUnit {
 
   def setup(): Unit = {
     activate(f0, f1)
+  }
+
+  val io = new Bundle {
+    val a = out Bool
   }
 }

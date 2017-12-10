@@ -23,6 +23,7 @@
 package vexriscv.ccopi
 
 import spinal.core.SpinalVerilog
+import vexriscv.ccopi.comm.CustomOpcodes.custom0
 import vexriscv.ccopi.comm._
 import vexriscv.{VexRiscv, VexRiscvConfig, plugin}
 import vexriscv.plugin._
@@ -37,6 +38,7 @@ object TestCoProcessor extends App {
       new TestCompUnit()
     )
   )
+  //System.exit(0)
 
   def cpu() = new VexRiscv(
     config = VexRiscvConfig(
