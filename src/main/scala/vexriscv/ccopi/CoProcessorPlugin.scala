@@ -20,21 +20,21 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package vexriscv.ccopi.comm
+package vexriscv.ccopi
 
 import spinal.core._
-import vexriscv.{DecoderService, Stage, Stageable, VexRiscv}
-import vexriscv.plugin.Plugin
-import vexriscv.ccopi.comm._
-import vexriscv.ccopi.comm.MaskedLiteralUtils._
+import spinal.lib._
+import vexriscv.plugin._
+import vexriscv._
+import Utilities._
 
 /**
-  * The VexRiscv co-processor plugin for a list of computation
-  * units.
+  * The co processor plugin for VexRiscv. Registers the computation units and
+  * creates a `Stageable` for each function.
   *
-  * @param compUnits the computation units
+  * @param compUnits
   */
-class CoProcessor(compUnits : Seq[CompUnit]) extends Plugin[VexRiscv] {
+class CoProcessorPlugin(compUnits : Seq[ComputationUnit]) extends Plugin[VexRiscv] {
 
   // Collect functions to create
   val functions = compUnits.map(u => u.functions.toList).flatten
@@ -45,11 +45,9 @@ class CoProcessor(compUnits : Seq[CompUnit]) extends Plugin[VexRiscv] {
     f -> stageable
   }
 
+
   override def setup(pipeline: VexRiscv): Unit = {
     import pipeline.config._
-
-    compUnits.foreach(u => u.setup())
-    checkOverlappingPattern(functions)
 
     // Register at decoder service
     val decoder = pipeline.service(classOf[DecoderService])
@@ -69,49 +67,20 @@ class CoProcessor(compUnits : Seq[CompUnit]) extends Plugin[VexRiscv] {
     }
   }
 
-  override def build(pipeline: VexRiscv): Unit = {
+  def build(pipeline: VexRiscv): Unit = {
     import pipeline._
     import pipeline.config._
+
+    val cocpu = new CoProcessor(compUnits)
 
     execute plug new Area {
       import execute._
 
-      for( (func, stageable) <- stageables) {
-
-        // When pattern matches, fire gets True
-        val fire = arbitration.isValid && input(stageable)
-
-        func.io.cmd.valid := False
-        func.io.cmd.payload.assignFromBits(execute.input(INSTRUCTION))
-
-        when(fire) {
-          func.io.cmd.valid := !arbitration.isStuckByOthers && !arbitration.removeIt
-          arbitration.haltItself := memory.arbitration.isValid && memory.input(stageable)
-        }
-      }
     }
 
     memory plug new Area {
       import memory._
 
-      for( (func, stageable) <- stageables) {
-        func.io.rsp.ready := !arbitration.isStuckByOthers
-
-        when(arbitration.isValid && input(stageable)) {
-          arbitration.haltItself := !func.io.rsp.valid
-
-          input(REGFILE_WRITE_DATA) := func.io.rsp.payload.asBits
-        }
-      }
     }
   }
-
-  /**
-    *
-    * @param functions
-    */
-  private def checkOverlappingPattern(functions : Seq[InstrBaseFunction]) : Unit = {
-
-  }
-
 }

@@ -23,9 +23,7 @@
 package vexriscv.ccopi
 
 import spinal.core.SpinalVerilog
-import vexriscv.ccopi.comm.CustomOpcodes.custom0
-import vexriscv.ccopi.comm._
-import vexriscv.{VexRiscv, VexRiscvConfig, plugin}
+import vexriscv._
 import vexriscv.plugin._
 
 /**
@@ -38,13 +36,14 @@ object TestCoProcessor extends App {
       new TestCompUnit()
     )
   )
+  //SpinalVerilog(cocpu()).printUnused()
   //System.exit(0)
 
   def cpu() = new VexRiscv(
     config = VexRiscvConfig(
       plugins = List(
 
-        cocpu(),
+        new CoProcessorPlugin(List(new TestCompUnit())),
 
         new PcManagerSimplePlugin(
           resetVector = 0x00000000l,
@@ -91,5 +90,5 @@ object TestCoProcessor extends App {
     )
   )
 
-  SpinalVerilog(cpu())
+  SpinalVerilog(cpu()).printPruned().printUnused()
 }

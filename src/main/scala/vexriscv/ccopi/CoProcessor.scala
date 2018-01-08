@@ -20,36 +20,19 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package vexriscv.ccopi.comm
+package vexriscv.ccopi
 
 import spinal.core._
 
 /**
-  * The custom RISC-V opcodes as described in
-  * the user level ISA v2.2 opcode mapping
+  * The main component of the co-processor which can work with
+  * a list of computation units.
+  *
+  * With the `EventController` trait the Co processor defines
+  * a fixed set of events the computation units can plug into.
   */
-object CustomOpcodes {
-  val custom0 = "0001011"
-  val custom1 = "0101011"
-  val custom2 = "1011011"
-  val custom3 = "1111011"
-}
+class CoProcessor(units : Seq[ComputationUnit]) extends Component with EventController {
+  type T = CoProcessor
 
-/**
-  * The Base class for a CCOPI command.
-  */
-class CCOPICmd extends Bundle
-
-/**
-  * The Base class for a CCOPI response.
-  */
-class CCOPIRsp extends Bundle
-
-class CCOPICmdRType extends CCOPICmd {
-  val funct = Bits(7 bits)
-  val rs2 = Bits(5 bits)
-  val rs1 = Bits(5 bits)
-  val tags = Bits(3 bits)
-  val rd = Bits(5 bits)
-  val opcode = Bits(7 bits)
+  compUnits ++= units
 }

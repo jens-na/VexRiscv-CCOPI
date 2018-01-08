@@ -22,48 +22,36 @@
  */
 package vexriscv.ccopi
 
-import spinal.core._
-import vexriscv.ccopi.CustomOpcodes._
+import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by jens on 28.11.17.
+  * A computation unit which can be managed by the co processor.
   */
-class TestCompUnit extends ComputationUnit {
+trait ComputationUnit {
 
-  def f0 = new InstructionFunction[Transferable, Transferable](new Transferable(), new Transferable()) {
-    val pattern: String = "00001-----"
-    val name: String = "f0"
-    val description: String = "f0 description"
+  var eventController : EventController = null
+  val functions = new ArrayBuffer[InstructionFunction[Transferable, Transferable]]
 
-    def build(controller: EventController): Unit = {
-
-      controller.prepare event new Area {
-        val io = new Bundle {
-          val a = in Bool
-        }
-      }
-
-    }
+  /**
+    * Activate a list of `InstructionFunction` to the computation unit.
+    * @param funcs
+    * @return
+    */
+  def activate(funcs : InstructionFunction[Transferable, Transferable]*) = {
+    functions ++= funcs
   }
 
-  def f1 = new InstructionFunction[Transferable, Transferable](new Transferable(), new Transferable()) {
-    val pattern: String = "00010-----"
-    val name: String = "f1"
-    val description: String = "f1 description"
+  /**
+    * The abstract setup function for the computation unit.
+    */
+  def setup() : Unit
 
-    def build(controller: EventController): Unit = {
-
-      controller.prepare event new Area {
-        val io = new Bundle {
-          val b = in Bool
-        }
-      }
-
-    }
+  /**
+    * Builds the computation unit.
+    */
+  def build() : Unit = {
+    functions.foreach(f => f.build(eventController))
   }
 
-  def setup(): Unit = {
-    activate(f0, f1)
-  }
 
 }

@@ -20,33 +20,33 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package vexriscv.ccopi.comm
-
+package vexriscv.ccopi
+import spinal.core.Component
 
 import scala.collection.mutable.ArrayBuffer
-import spinal.core._
-import vexriscv.VexRiscv
 
-abstract trait CompUnit {
+/**
+  *
+  */
+trait  EventController {
+  type T <: EventController
 
-  val functions = new ArrayBuffer[InstrFunction[CCOPICmd, CCOPIRsp]]
+  val compUnits = new ArrayBuffer[ComputationUnit]
 
-  def setup() : Unit
+  val events = new ArrayBuffer[CoProcessorEvent]
+  events ++= List.fill(2)(new CoProcessorEvent())
+
+  // The different events a co-processor can handle
+  val prepare :: incoming :: Nil = events.toList
+
 
   def build() : Unit = {
-    assert(
-      assertion = functions.length != 0,
-      message = s"Computation unit '${this.getClass.getSimpleName}' has no activated functions"
-    )
+    compUnits.foreach(u => u.eventController = this)
+    compUnits.foreach(u => u.setup())
 
-    functions.foreach { f =>
-      f.build()
-    }
+    // All functions are registered at this point
+    compUnits.foreach(u => u.build())
   }
 
-  def activate(func: InstrFunction[CCOPICmd, CCOPIRsp]*) : Unit = {
-    functions ++= func
-  }
-
-//  Component.current.addPrePopTask(() => build())
+  Component.current.addPrePopTask(() => build())
 }

@@ -20,22 +20,13 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package vexriscv.ccopi.comm
+package vexriscv.ccopi
 
 import spinal.core._
 
-/**
-  * Created by jens on 28.11.17.
-  */
-class InstrEvent extends Area {
 
-  def outsideCondScope[T](that : => T) : T = {
-    val body = Component.current.dslBody
-    body.push()
-    val swapContext = body.swap()
-    val ret = that
-    body.pop()
-    swapContext.appendBack()
-    ret
-  }
-}
+/**
+  * An abstract definition of something which can be
+  * transferred via the Stream bus.
+  */
+class Transferable extends Bundle

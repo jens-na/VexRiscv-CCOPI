@@ -20,52 +20,22 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package vexriscv.ccopi.comm
+package vexriscv.ccopi
 
 import spinal.core._
-import spinal.lib._
-import vexriscv.VexRiscv
 
-import scala.collection.mutable.ArrayBuffer
+/**
+  * The class which defines a co-processor event.
+  */
+class CoProcessorEvent() extends Area {
 
-trait InstrFunc {
-  val pattern : String
-
-  var events = ArrayBuffer[InstrEvent]()
-  events ++= List.fill(2)(new InstrEvent())
-  val incoming :: prepare :: Nil = events.toList
-
-  def build() : Unit
-}
-
-abstract class InstrBaseFunction extends Area with InstrFunc {
-
-  override def toString(): String = {
-    s"[ pattern=${pattern.toString()}"
+  def outsideCondScope[T](that : => T) : T = {
+    val body = Component.current.dslBody
+    body.push()
+    val swapContext = body.swap()
+    val ret = that
+    body.pop()
+    swapContext.appendBack()
+    ret
   }
-}
-
-abstract case class InstrFunction[A <: CCOPICmd, B <: CCOPIRsp](dtCmd : A, dtRsp : B) extends InstrBaseFunction {
-  val io = new Bundle {
-    val cmd = slave Stream (dtCmd)
-    val rsp = master Stream (dtRsp)
-  }
-
-  // Signal which handles the response of the Stream bus
-  private val flushRsp = RegInit(False)
-  io.rsp.valid := flushRsp
-
-  io.cmd.ready := False
-
-  def build() : Unit
-
-  /**
-    * Implicit class to create the areas for each instruction event
-    * @param ev the event to define
-    */
-  implicit class implicitsEvent(ev: InstrEvent){
-    def event[T <: Area](area : T) : T = {area.setCompositeName(ev,getName()).reflectNames();area}
-  }
-
-  Component.current.addPrePopTask(() => build())
 }

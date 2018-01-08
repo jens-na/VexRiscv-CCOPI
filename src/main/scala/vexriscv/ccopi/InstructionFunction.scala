@@ -23,47 +23,29 @@
 package vexriscv.ccopi
 
 import spinal.core._
-import vexriscv.ccopi.CustomOpcodes._
+import spinal.lib._
 
-/**
-  * Created by jens on 28.11.17.
-  */
-class TestCompUnit extends ComputationUnit {
+trait FunctionDef {
+  val pattern : String // Required
+  val name : String // default => [unnamed]
+  val description : String // default => [no description]
 
-  def f0 = new InstructionFunction[Transferable, Transferable](new Transferable(), new Transferable()) {
-    val pattern: String = "00001-----"
-    val name: String = "f0"
-    val description: String = "f0 description"
+  def getName() = name
+}
 
-    def build(controller: EventController): Unit = {
-
-      controller.prepare event new Area {
-        val io = new Bundle {
-          val a = in Bool
-        }
-      }
-
-    }
+abstract class InstructionFunction[A <: Transferable, B <: Transferable](dtCmd : A, dtRsp : B) extends FunctionDef {
+  val io = new Bundle {
+    val cmd = slave Stream (dtCmd)
+    val rsp = master Stream (dtRsp)
   }
 
-  def f1 = new InstructionFunction[Transferable, Transferable](new Transferable(), new Transferable()) {
-    val pattern: String = "00010-----"
-    val name: String = "f1"
-    val description: String = "f1 description"
+  def build(controller : EventController) : Unit
 
-    def build(controller: EventController): Unit = {
-
-      controller.prepare event new Area {
-        val io = new Bundle {
-          val b = in Bool
-        }
-      }
-
-    }
+    /**
+    * Implicit class to create the event areas
+    * @param ev the event to define
+    */
+  implicit class implicitsEvent(ev: CoProcessorEvent){
+    def event[T <: Area](area : T) : T = {area.setCompositeName(ev,getName()).reflectNames();area}
   }
-
-  def setup(): Unit = {
-    activate(f0, f1)
-  }
-
 }

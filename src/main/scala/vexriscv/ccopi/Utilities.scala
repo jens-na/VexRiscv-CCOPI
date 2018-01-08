@@ -20,13 +20,24 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package vexriscv.ccopi.comm
+package vexriscv.ccopi
 
-import spinal.core.MaskedLiteral
+import spinal.core._
 
-object MaskedLiteralUtils {
+/**
+  * The custom RISC-V opcodes as described in
+  * the user level ISA v2.2 opcode mapping
+  */
+object CustomOpcodes {
+  val custom0 = "0001011"
+  val custom1 = "0101011"
+  val custom2 = "1011011"
+  val custom3 = "1111011"
+}
 
-  /**
+object Utilities {
+
+    /**
     * Converts a `String` into a Spinal `MaskedLiteral` object. Can
     * be used to on any String instance.
     *
@@ -40,3 +51,4 @@ object MaskedLiteralUtils {
     def asMaskedLiteral : MaskedLiteral = MaskedLiteral.apply(s)
   }
 }
+
