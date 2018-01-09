@@ -27,6 +27,7 @@ import spinal.lib._
 import vexriscv.plugin._
 import vexriscv._
 import Utilities._
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * The co processor plugin for VexRiscv. Registers the computation units and
@@ -36,27 +37,37 @@ import Utilities._
   */
 class CoProcessorPlugin(compUnits : Seq[ComputationUnit]) extends Plugin[VexRiscv] {
 
+  var cocpu : CoProcessor = null
+
   // Collect functions to create
-  val functions = compUnits.map(u => u.functions.toList).flatten
+  var functions : ArrayBuffer[InstructionFunction[Transferable, Transferable]] = null
 
   // Create singelton stageables
-  val stageables = functions.map { f =>
-    object stageable extends Stageable(Bool)
-    f -> stageable
-  }
+  var stageables : ArrayBuffer[(InstructionFunction[Transferable, Transferable], Stageable[Bool])] = null
 
 
   override def setup(pipeline: VexRiscv): Unit = {
     import pipeline.config._
 
+    cocpu = new CoProcessor(compUnits)
+
+    functions = cocpu.compUnits.map(u => u.functions.toList).flatten
+
+    stageables = functions.map { f =>
+      object stageable extends Stageable(Bool)
+      stageable.setWeakName(f.name)
+      f -> stageable
+    }
+    //val functions = compUnits.map(u => u.functions.toList).flatten
+
     // Register at decoder service
     val decoder = pipeline.service(classOf[DecoderService])
-    for((f, s) <- stageables) {
-      decoder.addDefault(s, False)
+    for((func, stageable) <- stageables) {
+      decoder.addDefault(stageable, False)
       decoder.add(
-        key = f.pattern.asMaskedLiteral,
+        key = func.pattern.asMaskedLiteral,
         List(
-          s -> True,
+          stageable -> True,
           REGFILE_WRITE_VALID -> True,
           BYPASSABLE_EXECUTE_STAGE -> False,
           BYPASSABLE_MEMORY_STAGE -> False,
@@ -71,11 +82,14 @@ class CoProcessorPlugin(compUnits : Seq[ComputationUnit]) extends Plugin[VexRisc
     import pipeline._
     import pipeline.config._
 
-    val cocpu = new CoProcessor(compUnits)
-
     execute plug new Area {
       import execute._
 
+      //functions(0).io.cmd.valid := False
+
+      for((func, stageable) <- stageables) {
+       func.io.cmd.valid := True
+      }
     }
 
     memory plug new Area {

@@ -38,9 +38,10 @@ class TestCompUnit extends ComputationUnit {
     def build(controller: EventController): Unit = {
 
       controller.prepare event new Area {
-        val io = new Bundle {
-          val a = in Bool
+        val iointernal = new Bundle {
+          val a = out Bool
         }
+        iointernal.a := io.cmd.valid
       }
 
     }
@@ -54,7 +55,7 @@ class TestCompUnit extends ComputationUnit {
     def build(controller: EventController): Unit = {
 
       controller.prepare event new Area {
-        val io = new Bundle {
+        val xx = new Bundle {
           val b = in Bool
         }
       }

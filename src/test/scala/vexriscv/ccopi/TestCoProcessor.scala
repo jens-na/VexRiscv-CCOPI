@@ -31,11 +31,8 @@ import vexriscv.plugin._
   */
 object TestCoProcessor extends App {
 
-  def cocpu() = new CoProcessor(
-    List(
-      new TestCompUnit()
-    )
-  )
+  //def cocpu() = new CoProcessor())
+
   //SpinalVerilog(cocpu()).printUnused()
   //System.exit(0)
 
@@ -90,5 +87,5 @@ object TestCoProcessor extends App {
     )
   )
 
-  SpinalVerilog(cpu()).printPruned().printUnused()
+  SpinalVerilog(cpu()).printPruned()
 }

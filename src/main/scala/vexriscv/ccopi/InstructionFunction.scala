@@ -35,8 +35,8 @@ trait FunctionDef {
 
 abstract class InstructionFunction[A <: Transferable, B <: Transferable](dtCmd : A, dtRsp : B) extends FunctionDef {
   val io = new Bundle {
-    val cmd = slave Stream (dtCmd)
-    val rsp = master Stream (dtRsp)
+    val cmd = slave Stream (dtCmd).keep()
+    val rsp = master Stream (dtRsp).keep()
   }
 
   def build(controller : EventController) : Unit

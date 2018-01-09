@@ -34,5 +34,7 @@ import spinal.core._
 class CoProcessor(units : Seq[ComputationUnit]) extends Component with EventController {
   type T = CoProcessor
 
+  setWeakName("cocpu")
+
   compUnits ++= units
 }
