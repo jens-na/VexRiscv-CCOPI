@@ -22,6 +22,7 @@
  */
 package vexriscv.ccopi
 
+  import vexriscv.Stageable
 import spinal.core._
 
 /**
@@ -52,3 +53,6 @@ object Utilities {
   }
 }
 
+class CoCpuData[T <: Data](val dataType : T) extends HardType[T](dataType) with Nameable{
+
+}

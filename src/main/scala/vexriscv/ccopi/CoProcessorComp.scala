@@ -22,36 +22,16 @@
  */
 package vexriscv.ccopi
 
-import scala.collection.mutable.ArrayBuffer
+import spinal.core._
 
-/**
-  * A computation unit which can be managed by the co processor.
+/***
+  * With the `EventController` trait the Co processor defines
+  * a fixed set of events the computation units can plug into.
   */
-trait ComputationUnit {
+class CoProcessorComp(c : CoProcessor) extends Component with EventController {
+  type T = CoProcessorComp
 
-  var eventController : EventController = null
-  val functions = new ArrayBuffer[InstructionFunction[Transferable, Transferable]]
+  setWeakName("cocpu")
 
-  /**
-    * Activate a list of `InstructionFunction` to the computation unit.
-    * @param funcs
-    * @return
-    */
-  def activate(funcs : InstructionFunction[Transferable, Transferable]*) = {
-    functions ++= funcs
-  }
-
-  /**
-    * The abstract setup function for the computation unit.
-    */
-  def setup() : Unit
-
-  /**
-    * Builds the computation unit.
-    */
-  def build() : Unit = {
-    functions.foreach(f => f.build(eventController))
-  }
-
-
+  coprocessor = c
 }

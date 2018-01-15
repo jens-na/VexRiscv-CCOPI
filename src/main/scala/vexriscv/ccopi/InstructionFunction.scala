@@ -25,19 +25,51 @@ package vexriscv.ccopi
 import spinal.core._
 import spinal.lib._
 
-trait FunctionDef {
+trait FunctionDef extends Nameable {
   val pattern : String // Required
   val name : String // default => [unnamed]
   val description : String // default => [no description]
 
-  def getName() = name
+  override def getName() = name
 }
 
-abstract class InstructionFunction[A <: Transferable, B <: Transferable](dtCmd : A, dtRsp : B) extends FunctionDef {
+abstract class InstructionFunction[+A <: Bundle, +B <: Bundle](dtCmd : A, dtRsp : B) extends FunctionDef {
   val io = new Bundle {
-    val cmd = slave Stream (dtCmd).keep()
-    val rsp = master Stream (dtRsp).keep()
+    val cmd = slave Stream (dtCmd.asInstanceOf[Bundle])
+    val rsp = master Stream (dtRsp.asInstanceOf[Bundle])
   }
+  io.cmd.setWeakName("cmd")
+  io.rsp.setWeakName("rsp")
+
+  val cmdPayloadReg = Reg(Bits(io.cmd.payload.getBitsWidth bits))
+  val rspPayloadReg = Reg(Bits(io.rsp.payload.getBitsWidth bits))
+  val flush = RegInit(False)
+  val waitRsp = RegInit(False)
+  val done = RegInit(True)
+  io.cmd.ready := False
+  io.rsp.valid := waitRsp
+
+  when(io.rsp.ready){
+    waitRsp := False
+  }
+
+  when(done) {
+    when(!waitRsp || io.rsp.ready) { // New command
+      done := !io.cmd.valid
+      io.cmd.ready := True
+      io.rsp.payload.assignFromBits(B(io.rsp.payload.getBitsWidth bits, default -> false))
+      cmdPayloadReg := io.cmd.payload.asBits
+    }
+  }.otherwise{
+    io.rsp.payload.assignFromBits(rspPayloadReg.asBits)
+
+    when(flush){
+      done := True
+      waitRsp := True
+      io.cmd.ready := True
+    }
+  }
+
 
   def build(controller : EventController) : Unit
 

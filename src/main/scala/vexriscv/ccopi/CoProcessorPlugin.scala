@@ -35,30 +35,28 @@ import scala.collection.mutable.ArrayBuffer
   *
   * @param compUnits
   */
-class CoProcessorPlugin(compUnits : Seq[ComputationUnit]) extends Plugin[VexRiscv] {
+class CoProcessorPlugin(c : CoProcessor) extends Plugin[VexRiscv] {
 
-  var cocpu : CoProcessor = null
-
-  // Collect functions to create
-  var functions : ArrayBuffer[InstructionFunction[Transferable, Transferable]] = null
-
-  // Create singelton stageables
-  var stageables : ArrayBuffer[(InstructionFunction[Transferable, Transferable], Stageable[Bool])] = null
-
+  var cocpu : CoProcessorComp = null
+  var functions : ArrayBuffer[InstructionFunction[Bundle, Bundle]] = null
+  var stageables : ArrayBuffer[(InstructionFunction[Bundle, Bundle], Stageable[Bool])] = null
 
   override def setup(pipeline: VexRiscv): Unit = {
     import pipeline.config._
 
-    cocpu = new CoProcessor(compUnits)
+    cocpu = new CoProcessorComp(c)
 
-    functions = cocpu.compUnits.map(u => u.functions.toList).flatten
+    // Collect functions
+    functions = cocpu.coprocessor.functions
 
     stageables = functions.map { f =>
-      object stageable extends Stageable(Bool)
-      stageable.setWeakName(f.name)
+      // Create a singleton stageable and set the name to the provided
+      // function name
+      object stageable extends Stageable(Bool) {
+        override def setWeakName(name: String): this.type = super.setPartialName(cocpu, f.name)
+      }
       f -> stageable
     }
-    //val functions = compUnits.map(u => u.functions.toList).flatten
 
     // Register at decoder service
     val decoder = pipeline.service(classOf[DecoderService])
@@ -85,15 +83,37 @@ class CoProcessorPlugin(compUnits : Seq[ComputationUnit]) extends Plugin[VexRisc
     execute plug new Area {
       import execute._
 
-      //functions(0).io.cmd.valid := False
-
       for((func, stageable) <- stageables) {
-       func.io.cmd.valid := True
+        func.io.cmd.valid := False
+
+        // TODO Transferable payload assignment
+        func.io.cmd.payload.assignFromBits(input(INSTRUCTION))
+
+        SpinalInfo(s"Co-Processor function ${func.name} -> cmd payload width ${func.io.cmd.payload.getBitsWidth} Bits")
+        SpinalInfo(s"Co-Processor function ${func.name} <- rsp payload width ${func.io.cmd.payload.getBitsWidth} Bits")
+
+        when(arbitration.isValid && input(stageable)) {
+          func.io.cmd.valid := !arbitration.isStuckByOthers && !arbitration.removeIt
+          arbitration.haltItself := memory.arbitration.isValid && memory.input(stageable)
+        }
       }
     }
 
     memory plug new Area {
       import memory._
+
+      for((func, stageable) <- stageables) {
+
+        //func.io.flush := memory.arbitration.removeIt
+        func.io.rsp.ready := !arbitration.isStuckByOthers
+
+        when(arbitration.isValid && input(stageable)) {
+          arbitration.haltItself := !func.io.rsp.valid
+
+          // TODO Transferable payload assignment
+          input(REGFILE_WRITE_DATA) := func.io.rsp.payload.asBits
+        }
+      }
 
     }
   }

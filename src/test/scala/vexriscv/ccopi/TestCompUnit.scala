@@ -22,49 +22,79 @@
  */
 package vexriscv.ccopi
 
-import spinal.core._
+import spinal.core.{B, _}
 import vexriscv.ccopi.CustomOpcodes._
 
 /**
   * Created by jens on 28.11.17.
   */
-class TestCompUnit extends ComputationUnit {
+class TestCompUnit extends CoProcessor {
 
-  def f0 = new InstructionFunction[Transferable, Transferable](new Transferable(), new Transferable()) {
-    val pattern: String = "00001-----"
+  case class AESCmd() extends Bundle {
+    val opcode = Bits(7 bits)
+    val rd = Bits(5 bits)
+    val tags = Bits(3 bits)
+    val rs1 = Bits(5 bits)
+    val rs2 = Bits(5 bits)
+    val funct = Bits(7 bits)
+  }
+
+  case class AESRsp() extends Bundle {
+    val data = Bits(32 bits)
+  }
+
+  def f0 = new InstructionFunction[AESCmd, AESRsp](new AESCmd(), new AESRsp()) {
+    val pattern: String = s"-----------------000-----${custom0}"
     val name: String = "f0"
     val description: String = "f0 description"
 
     def build(controller: EventController): Unit = {
 
-      controller.prepare event new Area {
-        val iointernal = new Bundle {
-          val a = out Bool
-        }
-        iointernal.a := io.cmd.valid
+      val regs = controller.prepare event new Area {
+        val ramKey = Mem(Bits(32 bits), 4)
+        val ramData = Mem(Bits(32 bits), 4)
+        val ramResult = Mem(Bits(32 bits), 4)
       }
 
-    }
-  }
 
-  def f1 = new InstructionFunction[Transferable, Transferable](new Transferable(), new Transferable()) {
-    val pattern: String = "00010-----"
-    val name: String = "f1"
-    val description: String = "f1 description"
+      val exec = controller.idle event new Area {
+        val tCmd = new AESCmd()
+        tCmd.assignFromBits(cmdPayloadReg.asBits)
 
-    def build(controller: EventController): Unit = {
+        val funct = tCmd.funct
 
-      controller.prepare event new Area {
-        val xx = new Bundle {
-          val b = in Bool
+        val tRsp = new AESRsp()
+        rspPayloadReg := tRsp.asBits
+
+        when(!done) {
+          switch(funct) {
+            is(B"0000001") {
+              tRsp.data := B(32 bits, (31 downto 29) -> B"001", default -> False)
+              flush := True
+            }
+            is(B"0000010") {
+              tRsp.data := B(32 bits, (31 downto 29) -> B"010", default -> False)
+              flush := True
+            }
+            is(B"0000011") {
+              tRsp.data := B(32 bits, (31 downto 29) -> B"011", default -> False)
+            }
+            is(B"0000100") {
+              tRsp.data := B(32 bits, (31 downto 29) -> B"100", default -> False)
+            }
+            default {
+              tRsp.data := B(32 bits, (31 downto 29) -> B"111", default -> False)
+            }
+          }
+        }.otherwise {
+          tRsp.data := B(32 bits, (31 downto 29) -> B"111", default -> False)
         }
       }
-
     }
   }
 
   def setup(): Unit = {
-    activate(f0, f1)
+    activate(f0)
   }
 
 }

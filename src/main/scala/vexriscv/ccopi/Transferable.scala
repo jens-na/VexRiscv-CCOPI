@@ -29,4 +29,4 @@ import spinal.core._
   * An abstract definition of something which can be
   * transferred via the Stream bus.
   */
-class Transferable extends Bundle
+class Transferable[+T] extends Bundle

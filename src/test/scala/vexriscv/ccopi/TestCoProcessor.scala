@@ -40,7 +40,7 @@ object TestCoProcessor extends App {
     config = VexRiscvConfig(
       plugins = List(
 
-        new CoProcessorPlugin(List(new TestCompUnit())),
+        new CoProcessorPlugin(new TestCompUnit()),
 
         new PcManagerSimplePlugin(
           resetVector = 0x00000000l,

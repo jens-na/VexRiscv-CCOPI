@@ -21,7 +21,7 @@
  * OR OTHER DEALINGS IN THE SOFTWARE.
  */
 package vexriscv.ccopi
-import spinal.core.Component
+import spinal.core._
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -31,21 +31,21 @@ import scala.collection.mutable.ArrayBuffer
 trait  EventController {
   type T <: EventController
 
-  val compUnits = new ArrayBuffer[ComputationUnit]
+  var coprocessor : CoProcessor = null
+  var eventController : EventController = this
 
   val events = new ArrayBuffer[CoProcessorEvent]
   events ++= List.fill(2)(new CoProcessorEvent())
 
   // The different events a co-processor can handle
-  val prepare :: incoming :: Nil = events.toList
-
+  val prepare :: idle :: Nil = events.toList
 
   def build() : Unit = {
-    compUnits.foreach(u => u.eventController = this)
-    compUnits.foreach(u => u.setup())
+    coprocessor.eventController = this
+    coprocessor.setup()
 
     // All functions are registered at this point
-    compUnits.foreach(u => u.build())
+    coprocessor.functions.foreach(f => f.build(eventController))
   }
 
   Component.current.addPrePopTask(() => build())
