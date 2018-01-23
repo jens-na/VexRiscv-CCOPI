@@ -58,36 +58,31 @@ class TestCompUnit extends CoProcessor {
 
 
       val exec = controller.idle event new Area {
-        val tCmd = new AESCmd()
-        tCmd.assignFromBits(cmdPayloadReg.asBits)
-
-        val funct = tCmd.funct
-
-        val tRsp = new AESRsp()
-        rspPayloadReg := tRsp.asBits
+        val funct = command.funct
 
         when(!done) {
           switch(funct) {
             is(B"0000001") {
-              tRsp.data := B(32 bits, (31 downto 29) -> B"001", default -> False)
+              response.data := B(32 bits, (31 downto 29) -> B"001", default -> False)
               flush := True
             }
             is(B"0000010") {
-              tRsp.data := B(32 bits, (31 downto 29) -> B"010", default -> False)
+              response.data := B(32 bits, (31 downto 29) -> B"010", default -> False)
               flush := True
             }
             is(B"0000011") {
-              tRsp.data := B(32 bits, (31 downto 29) -> B"011", default -> False)
+              response.data := B(32 bits, (31 downto 29) -> B"011", default -> False)
             }
             is(B"0000100") {
-              tRsp.data := B(32 bits, (31 downto 29) -> B"100", default -> False)
+              response.data := B(32 bits, (31 downto 29) -> B"100", default -> False)
             }
             default {
-              tRsp.data := B(32 bits, (31 downto 29) -> B"111", default -> False)
+              response.data := B(32 bits, (31 downto 29) -> B"111", default -> False)
+              flush := True
             }
           }
         }.otherwise {
-          tRsp.data := B(32 bits, (31 downto 29) -> B"111", default -> False)
+          response.data := B(32 bits, (31 downto 29) -> B"111", default -> False)
         }
       }
     }

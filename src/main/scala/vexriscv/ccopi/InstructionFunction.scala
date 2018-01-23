@@ -38,37 +38,50 @@ abstract class InstructionFunction[+A <: Bundle, +B <: Bundle](dtCmd : A, dtRsp 
     val cmd = slave Stream (dtCmd.asInstanceOf[Bundle])
     val rsp = master Stream (dtRsp.asInstanceOf[Bundle])
   }
-  io.cmd.setWeakName("cmd")
-  io.rsp.setWeakName("rsp")
 
-  val cmdPayloadReg = Reg(Bits(io.cmd.payload.getBitsWidth bits))
-  val rspPayloadReg = Reg(Bits(io.rsp.payload.getBitsWidth bits))
+  // Payload of the command, prepared as specific bundle
+  private[this] val cmdPayloadReg = Reg(Bits(io.cmd.payload.getBitsWidth bits))
+  val command = cloneOf(dtCmd)
+  command.assignFromBits(cmdPayloadReg.asBits)
+
+  // Payload of the response, prepared as specific bundle
+  val response = cloneOf(dtRsp)
+  io.rsp.payload.assignFromBits(response.asBits)
+
   val flush = RegInit(False)
-  val waitRsp = RegInit(False)
+
   val done = RegInit(True)
+
+
+  // Communication of the Ready/Valid-Interface
   io.cmd.ready := False
-  io.rsp.valid := waitRsp
+  io.rsp.valid := flush // Send response when user sets flush
 
   when(io.rsp.ready){
-    waitRsp := False
+    flush := False
   }
 
   when(done) {
-    when(!waitRsp || io.rsp.ready) { // New command
+    when(!flush || io.rsp.ready) { // New command
       done := !io.cmd.valid
+      flush := False
       io.cmd.ready := True
       io.rsp.payload.assignFromBits(B(io.rsp.payload.getBitsWidth bits, default -> false))
       cmdPayloadReg := io.cmd.payload.asBits
     }
   }.otherwise{
-    io.rsp.payload.assignFromBits(rspPayloadReg.asBits)
-
     when(flush){
       done := True
-      waitRsp := True
       io.cmd.ready := True
     }
   }
+
+  // Set weak names for debug purposes
+  io.cmd.setWeakName("cmd")
+  io.rsp.setWeakName("rsp")
+  flush.setWeakName("flush")
+  done.setWeakName("done")
+  cmdPayloadReg.setWeakName("cmdPayloadReg")
 
 
   def build(controller : EventController) : Unit
