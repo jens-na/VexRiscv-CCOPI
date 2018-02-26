@@ -39,9 +39,6 @@ object TestCoProcessor extends App {
   def cpu() = new VexRiscv(
     config = VexRiscvConfig(
       plugins = List(
-
-        new CoProcessorPlugin(new TestCompUnit()),
-
         new PcManagerSimplePlugin(
           resetVector = 0x00000000l,
           relaxedPcCalculation = false
@@ -55,6 +52,7 @@ object TestCoProcessor extends App {
           catchAccessFault = false
         ),
         new CsrPlugin(CsrPluginConfig.smallest),
+        new CoProcessorPlugin(new TestCompUnit()),
         new DecoderSimplePlugin(
           catchIllegalInstruction = false
         ),

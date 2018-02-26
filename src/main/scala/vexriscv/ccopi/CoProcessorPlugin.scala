@@ -27,19 +27,21 @@ import spinal.lib._
 import vexriscv.plugin._
 import vexriscv._
 import Utilities._
+import org.apache.commons.io.filefilter.FalseFileFilter
+
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * The co processor plugin for VexRiscv. Registers the computation units and
   * creates a `Stageable` for each function.
   *
-  * @param compUnits
+  * @param c
   */
 class CoProcessorPlugin(c : CoProcessor) extends Plugin[VexRiscv] {
 
   var cocpu : CoProcessorComp = null
-  var functions : ArrayBuffer[InstructionFunction[Bundle, Bundle]] = null
-  var stageables : ArrayBuffer[(InstructionFunction[Bundle, Bundle], Stageable[Bool])] = null
+  var functions : ArrayBuffer[InstructionFunction[InputBundle, OutputBundle]] = null
+  var stageables : ArrayBuffer[(InstructionFunction[InputBundle, OutputBundle], Stageable[Bool])] = null
 
   override def setup(pipeline: VexRiscv): Unit = {
     import pipeline.config._
@@ -59,6 +61,7 @@ class CoProcessorPlugin(c : CoProcessor) extends Plugin[VexRiscv] {
     }
 
     // Register at decoder service
+
     val decoder = pipeline.service(classOf[DecoderService])
     for((func, stageable) <- stageables) {
       decoder.addDefault(stageable, False)
@@ -74,6 +77,17 @@ class CoProcessorPlugin(c : CoProcessor) extends Plugin[VexRiscv] {
         )
       )
     }
+
+    val csr = pipeline.service(classOf[CsrPlugin])
+    //csr.externalInterrupt := False
+    /*for((func, stageable) <- stageables) {
+
+      if(func.response.isInstanceOf[InterruptBundle]) {
+        val extInterrupt = RegInit(False)
+        extInterrupt := func.io.interrupt
+        csr.externalInterrupt := extInterrupt
+      }
+    }*/
   }
 
   def build(pipeline: VexRiscv): Unit = {
@@ -86,11 +100,17 @@ class CoProcessorPlugin(c : CoProcessor) extends Plugin[VexRiscv] {
       for((func, stageable) <- stageables) {
         func.io.cmd.valid := False
 
-        // TODO Transferable payload assignment
-        func.io.cmd.payload.assignFromBits(input(INSTRUCTION))
+        // Transfer RS1 and RS2
+        func.io.cmd.cpuRS1 := input(RS1)
+        func.io.cmd.cpuRS2 := input(RS2)
+
+        // Transfer instruction data
+        val hi = func.io.cmd.payload.getBitsWidth
+        val lo = (func.io.cmd.payload.getBitsWidth - 32)
+        func.io.cmd.payload.assignFromBits(input(INSTRUCTION), hi, lo)
 
         SpinalInfo(s"Co-Processor function ${func.name} -> cmd payload width ${func.io.cmd.payload.getBitsWidth} Bits")
-        SpinalInfo(s"Co-Processor function ${func.name} <- rsp payload width ${func.io.cmd.payload.getBitsWidth} Bits")
+        SpinalInfo(s"Co-Processor function ${func.name} <- rsp payload width ${func.io.rsp.payload.getBitsWidth} Bits")
 
         when(arbitration.isValid && input(stageable)) {
           func.io.cmd.valid := !arbitration.isStuckByOthers && !arbitration.removeIt
@@ -108,10 +128,12 @@ class CoProcessorPlugin(c : CoProcessor) extends Plugin[VexRiscv] {
         func.io.rsp.ready := !arbitration.isStuckByOthers
 
         when(arbitration.isValid && input(stageable)) {
-          arbitration.haltItself := !func.io.rsp.valid
 
-          // TODO Transferable payload assignment
-          input(REGFILE_WRITE_DATA) := func.io.rsp.payload.asBits
+          // Only stall the pipeline when there is a response to wait for
+          if(!func.response.isInstanceOf[InterruptBundle]) {
+            arbitration.haltItself := !func.io.rsp.valid
+            input(REGFILE_WRITE_DATA) := func.io.rsp.payload.asBits
+          }
         }
       }
 

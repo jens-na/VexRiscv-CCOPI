@@ -25,8 +25,10 @@ package vexriscv.ccopi
 import spinal.core._
 
 
-/**
-  * An abstract definition of something which can be
-  * transferred via the Stream bus.
-  */
-class Transferable[+T] extends Bundle
+class InputBundle extends Bundle {
+  val cpuRS1 = Bits(32 bits)
+  val cpuRS2 = Bits(32 bits)
+}
+
+class OutputBundle extends Bundle
+class InterruptBundle extends OutputBundle

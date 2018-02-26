@@ -23,6 +23,7 @@
 package vexriscv.ccopi
 
 import spinal.core.{B, _}
+import spinal.lib.Counter
 import vexriscv.ccopi.CustomOpcodes._
 
 /**
@@ -30,7 +31,7 @@ import vexriscv.ccopi.CustomOpcodes._
   */
 class TestCompUnit extends CoProcessor {
 
-  case class AESCmd() extends Bundle {
+  case class AESCmd() extends InputBundle {
     val opcode = Bits(7 bits)
     val rd = Bits(5 bits)
     val tags = Bits(3 bits)
@@ -39,11 +40,11 @@ class TestCompUnit extends CoProcessor {
     val funct = Bits(7 bits)
   }
 
-  case class AESRsp() extends Bundle {
+  case class AESRsp() extends OutputBundle {
     val data = Bits(32 bits)
   }
 
-  def f0 = new InstructionFunction[AESCmd, AESRsp](new AESCmd(), new AESRsp()) {
+  def f0 = new InstructionFunction[AESCmd, InterruptBundle](new AESCmd(), new InterruptBundle()) {
     val pattern: String = s"-----------------000-----${custom0}"
     val name: String = "f0"
     val description: String = "f0 description"
@@ -56,34 +57,25 @@ class TestCompUnit extends CoProcessor {
         val ramResult = Mem(Bits(32 bits), 4)
       }
 
-
       val exec = controller.idle event new Area {
         val funct = command.funct
+        val internalAddr = command.rs1.asUInt.resize(2)
+        val defaultResponse = False.asBits(32 bits)
+        val counter = Counter(8)
+        counter.setWeakName("counter")
+        //val funcAesStoreKey = (funct === B"0000001")
+        //val funcAesStoreData = (funct === B"0000010")
+
+        when(counter.willOverflowIfInc) {
+          flush := True
+        }
 
         when(!done) {
-          switch(funct) {
-            is(B"0000001") {
-              response.data := B(32 bits, (31 downto 29) -> B"001", default -> False)
-              flush := True
-            }
-            is(B"0000010") {
-              response.data := B(32 bits, (31 downto 29) -> B"010", default -> False)
-              flush := True
-            }
-            is(B"0000011") {
-              response.data := B(32 bits, (31 downto 29) -> B"011", default -> False)
-            }
-            is(B"0000100") {
-              response.data := B(32 bits, (31 downto 29) -> B"100", default -> False)
-            }
-            default {
-              response.data := B(32 bits, (31 downto 29) -> B"111", default -> False)
-              flush := True
-            }
-          }
+          counter.increment()
         }.otherwise {
-          response.data := B(32 bits, (31 downto 29) -> B"111", default -> False)
+          counter.clear()
         }
+
       }
     }
   }

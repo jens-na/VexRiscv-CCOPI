@@ -33,11 +33,14 @@ trait FunctionDef extends Nameable {
   override def getName() = name
 }
 
-abstract class InstructionFunction[+A <: Bundle, +B <: Bundle](dtCmd : A, dtRsp : B) extends FunctionDef {
+abstract class InstructionFunction[+A <: InputBundle, +B <: OutputBundle](dtCmd : A, dtRsp : B) extends FunctionDef {
   val io = new Bundle {
-    val cmd = slave Stream (dtCmd.asInstanceOf[Bundle])
-    val rsp = master Stream (dtRsp.asInstanceOf[Bundle])
+    val cmd = slave Stream (dtCmd.asInstanceOf[InputBundle])
+    val rsp = master Stream (dtRsp.asInstanceOf[OutputBundle])
+    val interrupt = out Bool
   }
+
+  val interruptCtl = dtRsp.isInstanceOf[InterruptBundle]
 
   // Payload of the command, prepared as specific bundle
   private[this] val cmdPayloadReg = Reg(Bits(io.cmd.payload.getBitsWidth bits))
@@ -49,9 +52,13 @@ abstract class InstructionFunction[+A <: Bundle, +B <: Bundle](dtCmd : A, dtRsp 
   io.rsp.payload.assignFromBits(response.asBits)
 
   val flush = RegInit(False)
-
   val done = RegInit(True)
 
+  if(interruptCtl) {
+    io.interrupt := flush
+  } else {
+    io.interrupt := False
+  }
 
   // Communication of the Ready/Valid-Interface
   io.cmd.ready := False
@@ -79,6 +86,7 @@ abstract class InstructionFunction[+A <: Bundle, +B <: Bundle](dtCmd : A, dtRsp 
   // Set weak names for debug purposes
   io.cmd.setWeakName("cmd")
   io.rsp.setWeakName("rsp")
+  io.interrupt.setWeakName("interrupt")
   flush.setWeakName("flush")
   done.setWeakName("done")
   cmdPayloadReg.setWeakName("cmdPayloadReg")
