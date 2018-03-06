@@ -61,7 +61,7 @@ class TestCompUnit extends CoProcessor {
         val funct = command.funct
         val internalAddr = command.rs1.asUInt.resize(2)
         val defaultResponse = False.asBits(32 bits)
-        val counter = Counter(8)
+        val counter = Counter(12)
         counter.setWeakName("counter")
         //val funcAesStoreKey = (funct === B"0000001")
         //val funcAesStoreData = (funct === B"0000010")

@@ -32,6 +32,5 @@ class CoProcessorComp(c : CoProcessor) extends Component with EventController {
   type T = CoProcessorComp
 
   setWeakName("cocpu")
-
   coprocessor = c
 }

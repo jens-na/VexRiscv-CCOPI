@@ -61,7 +61,6 @@ class CoProcessorPlugin(c : CoProcessor) extends Plugin[VexRiscv] {
     }
 
     // Register at decoder service
-
     val decoder = pipeline.service(classOf[DecoderService])
     for((func, stageable) <- stageables) {
       decoder.addDefault(stageable, False)
@@ -79,15 +78,9 @@ class CoProcessorPlugin(c : CoProcessor) extends Plugin[VexRiscv] {
     }
 
     val csr = pipeline.service(classOf[CsrPlugin])
-    //csr.externalInterrupt := False
-    /*for((func, stageable) <- stageables) {
-
-      if(func.response.isInstanceOf[InterruptBundle]) {
-        val extInterrupt = RegInit(False)
-        extInterrupt := func.io.interrupt
-        csr.externalInterrupt := extInterrupt
-      }
-    }*/
+    for((func, stageable) <- stageables) {
+      csr.pluginInterrupt setWhen(func.io.interrupt)
+    }
   }
 
   def build(pipeline: VexRiscv): Unit = {

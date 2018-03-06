@@ -48,12 +48,4 @@ trait CoProcessor {
     */
   def setup() : Unit
 
-  /**
-    * Builds the computation unit.
-    */
-  def build() : Unit = {
-
-  }
-
-
 }
