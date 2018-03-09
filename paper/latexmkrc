@@ -1,0 +1,5 @@
+$pdf_mode = 1;
+$pdflatex='lualatex';
+$pdflatex='pdflatex  %O  --shell-escape %S';
+@default_files = ('ccopi_paper.tex');
+$out_dir='build'
