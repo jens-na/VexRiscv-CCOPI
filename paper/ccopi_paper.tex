@@ -413,7 +413,7 @@ RISC-V implementation named VexRiscv.
 
 \section{VexRiscv}
 CCOPI uses VexRiscv as its underlying RISC-V implementation. VexRiscv 
-implements the ``RV32IM'' instruction set, which means:
+implements the ``RV32IM'' instruction set, which means that it contains:
 \begin{itemize}
     \item 32 Bit registers
     \item Base Integer instruction set
@@ -421,10 +421,11 @@ implements the ``RV32IM'' instruction set, which means:
 Multiplication and Division
 \end{itemize}
 The CPU is pipelined on a five-stage RISC pipeline like the MIPS
-architecture. The \textbf{Instruction Fetch} stage is responsible of
-writing the next 32-bit instruction in the register ``pc''. Afterwards
-the \textbf{Decode} stage analyzes the instruction. Based on the opcode
-the decode stage knows to interpret $instr[31:7]$ of the instruction
+architecture. The \textbf{Instruction Fetch} stage
+copies the next 32-bit instruction in the register ``pc''. Once the
+instruction is present the \textbf{Decode} stage analyzes the instruction. 
+Based on the opcode
+the Decode stage knows how to interpret $instr[31:7]$ of the instruction
 which is stored in ``pc''. The \textbf{Execute} stage computes a result
 based on the operands which were determined in the Decode stage. The
 Execute stage consists of multiple Arithmetic Logical Units (ALU) to
@@ -434,7 +435,90 @@ the \textbf{Write Back} stage, copies the result of the Execute stage in
 the destination register ``rd'', which is specified in $instr[11:7]$ of
 the instruction.
 \subsection{Plugin mechanism}
+A CPU in general consists of a large number of modules, for example:
+\begin{itemize}
+    \item Arithmetic Logical Units
+    \item Branch prediction module
+    \item Pipeline-hazard management module
+\end{itemize}
+In VexRiscv each module is designed as a \textbf{plugin} which describes how the
+pipeline should behave, when the plugin is active. For this purpose
+a module (or plugin) can modify every single pipeline stage. The
+compilation process of SpinalHDL resolves the plugins and creates a
+pipeline which contains the plugin-specific pipeline
+modifications.
+
+A VexRiscv plugin must be programmed against the Trait \code{Plugin}:
+\begin{lstlisting}[language=scala]
+class SomePlugin extends Plugin[VexRiscv] {
+
+  /** Configure plugin */
+  override def setup(p: VexRiscv): Unit = {
+  
+  }
+  
+  /** Change pipeline */
+  override def build(p: VexRiscv): Unit = {
+  
+  }
+}
+\end{lstlisting}
+\noindent Once ``\code{extends Plugin[VexRiscv]}'' is defined the two
+functions \code{setup()} and \code{build()} must be implemented. The
+configuration of the plugin takes place in the \code{setup()} function.
+In the \code{build()} function pipeline modifications can be defined.
+For this purpose it is possible to plug into the different pipeline
+stanges:
+\begin{lstlisting}[language=scala]
+override def build(p: VexRiscv): Unit = {
+  import pipeline._
+  import pipeline.config._
+
+  execute plug new Area {
+    // Execute Stage code
+  }
+
+  memory plug new Area {
+    // Memory Stage code
+  }
+}
+\end{lstlisting}
+In the listing above, pipeline specific code can be defined in the
+corresponding stage area. With CCOPI a new instruction-set extension
+will be defined in the \code{setup()} function. The communication
+between VexRiscv and the coprocessor takes place in the execute- and
+memory-stage specific pipeline areas.
+
 \section{CCOPI}
+CCOPI is the name of the custom coprocessor interface for the RISC-V
+implementation VexRiscv. It is designed to statisfy the following basic
+principles:
+\begin{itemize}
+    \item A coprocessor is a VexRiscv plugin
+    \item A designed coprocessor can also be used without VexRiscv
+\end{itemize}
+A CCOPI based coprocessor may contain one or more ``instruction
+functions'', which are hardware operations bound to distinct
+instruction patterns. For example a coprocessor named
+``SymmetricCryptoCoProcessor'' can be created with the following two
+instruction functions:
+\begin{itemize}
+    \item AES, with the pattern:\\ \code{"-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}000-{}-{}-{}-{}-{}0001011"} 
+    \item DES, with the pattern: \\ \code{"-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}001-{}-{}-{}-{}-{}0001011"}
+\end{itemize}
+Both instruction functions uses the custom-0 opcode, but the patterns
+differ at $instr[14:12]$ (funct3). 
+
+Since CCOPI is a VexRiscv plugin it is possible to register the
+instruction patterns at the decoder service of the CPU implementation.
+This can be done in the \code{setup()} function of the CCOPI plugin:
+\begin{lstlisting}[language=scala]
+val decoder = pipeline.service(
+                      classOf[DecoderService])
+decoder.add(...)
+\end{lstlisting}
+Once the patterns are registered the decoder of VexRiscv is able to
+decode the instruction functions of CCOPI.
 \section{Acceleration Evaluation}
 
 \bibliographystyle{unsrt}
