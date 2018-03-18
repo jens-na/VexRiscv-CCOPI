@@ -8,6 +8,7 @@
 \linespread{1.05} % Palatino needs more space between lines
 \usepackage{microtype}
 \usepackage{amsmath}
+\usepackage{svg}
 \usepackage{listings}
 \usepackage{tikz}
 \tikzstyle{na} = [baseline=-.5ex]
@@ -497,7 +498,7 @@ principles:
     \item A coprocessor is a VexRiscv plugin
     \item A designed coprocessor can also be used without VexRiscv
 \end{itemize}
-A CCOPI based coprocessor may contain one or more ``instruction
+A CCOPI based coprocessor contains one or more ``instruction
 functions'', which are hardware operations bound to distinct
 instruction patterns. For example a coprocessor named
 ``SymmetricCryptoCoProcessor'' can be created with the following two
@@ -507,9 +508,9 @@ instruction functions:
     \item DES, with the pattern: \\ \code{"-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}001-{}-{}-{}-{}-{}0001011"}
 \end{itemize}
 Both instruction functions uses the custom-0 opcode, but the patterns
-differ at $instr[14:12]$ (funct3). 
+differ at $instr[14:12]$ (funct3).
 
-Since CCOPI is a VexRiscv plugin it is possible to register the
+\paragraph{Decoder registration.} Since CCOPI is a VexRiscv plugin it is possible to register the
 instruction patterns at the decoder service of the CPU implementation.
 This can be done in the \code{setup()} function of the CCOPI plugin:
 \begin{lstlisting}[language=scala]
@@ -519,6 +520,65 @@ decoder.add(...)
 \end{lstlisting}
 Once the patterns are registered the decoder of VexRiscv is able to
 decode the instruction functions of CCOPI.
+
+\begin{figure}[ht]
+    \includegraphics[scale=0.68]{ccopi_plugin}
+    \caption{Component structure}
+    \label{fig:component_structure}
+\end{figure}
+
+\paragraph{Pipeline modifications.}
+Figure \ref*{fig:component_structure} shows that the coprocessor 
+is connected with the CCOPI plugin. The communication between the 
+two is controlled
+by a handshake-based protocol named ``Ready/Valid interface''. The
+corresponding implementation in SpinalHDL is called ``Stream bus''. 
+
+If one of the registered instruction functions gets decoded in the
+Decode stage, the CCOPI plugin sends a command (cmd) to the
+coprocessor and waits for its response (rsp).
+\begin{figure}
+    \includesvg{ready_valid}
+    \caption{Ready/Valid interface example communication for cmd.}
+    \label{fig:ready_valid}
+\end{figure}
+
+Figure \ref*{fig:ready_valid} shows the communication of a command,
+which is specified in the Execute stage of the CCOPI plugin:
+\begin{itemize}
+    \item cmd.valid -- set by the CCOPI plugin to indicate that new data
+        is available
+    \item cmd.payload -- holds the content of the command
+    \item cmd.ready -- set by the coprocessor to signal that the data
+        transfer is complete.
+\end{itemize}
+The payload of a command is 96 bits wide and contains the following
+three 32 bit values:
+\begin{itemize}
+    \item The current instruction $instr[31:0]$
+    \item Register content of rs1, which is specified in $instr[20:15]$
+    \item Register content of rs2, which is specified in $instr[24:19]$
+\end{itemize}
+CCOPI uses inheritance to define the command as SpinalHDL Bundles:
+\begin{lstlisting}[language=scala]
+class InputBundle extends Bundle {
+  val cpuRS1 = Bits(32 bits)
+  val cpuRS2 = Bits(32 bits)
+}
+
+case class ExampleCmd() extends InputBundle {
+  val opcode = Bits(7 bits)
+  val rd = Bits(5 bits)
+  val tags = Bits(3 bits)
+  val rs1 = Bits(5 bits)
+  val rs2 = Bits(5 bits)
+  val funct = Bits(7 bits)
+}
+\end{lstlisting}
+Note that the Bundle \code{ExampleCmd} represents the introduced R-instruction type from Figure \ref*{fig:riscv_r_type}. The coprocessor
+however is not limited to the predefined types, which means
+that other definitions are also possible.
+
 \section{Acceleration Evaluation}
 
 \bibliographystyle{unsrt}
