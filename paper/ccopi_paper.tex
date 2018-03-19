@@ -134,14 +134,14 @@ task.
 
 Former coprocessors like the Intel 80387 or Motorolas 68881 were used to
 execute IEEE 754 compliant floating point operations and could be
-bought as independent components. To use the coprocessors new
+bought as independent components~\cite{motorola, intel198780387}. To use the coprocessors new
 instructions were included in the instruction stream of the core CPU.
 
 Today the logic of coprocessors are often included inside the CPU
 itself as an instruction-set extension. Well-known examples are the
 Intel\textregistered{} x87 
 floating point unit (FPU) or the Intel\textregistered{} Advanced Encryption Standard New 
-Instructions (AES-NI). Both modules introduce new instructions which can
+Instructions (AES-NI)~\cite{x87, aesni}. Both modules introduce new instructions which can
 be used by developers.
 CCOPI is designed to produce coprocessors which resides inside the core
 RISC-V CPU named VexRiscv similar to x87 or AES-NI discussed above.
@@ -151,7 +151,8 @@ gives an introductional overview of the topics RISC-V and the used
 hardware description language SpinalHDL.
 \section{RISC-V}
 RISC-V is the name of an open source instruction-set architecture (ISA)
-which has been developed at the University of California, Berkeley.
+which has been developed at the University of California,
+Berkeley~\cite{riscv}.
 The ISA describes the instructions any RISC-V implementation must
 implement, plus optional extensions. The required minimum is specified in
 the ``Base Integer Instruction Set'' of the User Level ISA.
@@ -294,7 +295,7 @@ decoded in $instr[31:25]$, exposes the exact type of operation:
 \end{itemize}
 $rs1$, $rs2$ and $rd$ are always encoded at the same positions
 in $instr$ to simplify the decoding process in an implementation of
-RISC-V.
+RISC-V~\cite[p. 11]{riscv}.
 
 The ISA also defines opcodes which will not be used by future extensions
 and can be used for custom instruction-set extensions:
@@ -305,14 +306,14 @@ and can be used for custom instruction-set extensions:
         \item $1111011$ : custom-3
     \end{itemize}
 The opcodes of custom-2/3 may not be used in RISC-V implementations where the
-integer registers are extended to 128 bits (RV128I). With CCOPI it is
+integer registers are extended to 128 bits (RV128I)~\cite[p. 103]{riscv}. With CCOPI it is
 possible to create instruction-set extensions with one or more of the described 
 custom opcodes.
 \section{SpinalHDL}
 The CPU implementation VexRiscv and CCOPI are implemented in the
 language ``SpinalHDL'', which is a ``high level hardware description
 language'' to describe digital hardware as part of register-transfer
-level design. The output of a compilation process is VHDL or
+level design~\cite{spinal_doc1}. The output of a compilation process is VHDL or
 Verilog code. For this reason SpinalHDL is a transcompiler which takes
 Scala code and transforms it into Verilog or VHDL.  
 
@@ -366,7 +367,7 @@ val romsbox = Mem(Bits(8 bits),
                   sbox.map(B(_, 8 bits)))
 \end{lstlisting}
 
-\noindent The generated code looks like this:
+\noindent The generated code looks as follows:
 \begin{lstlisting}[language=verilog]
 module Comp ();
   reg [7:0] romsbox [0:1];
@@ -566,7 +567,7 @@ class InputBundle extends Bundle {
   val cpuRS2 = Bits(32 bits)
 }
 
-case class ExampleCmd() extends InputBundle {
+case class Cmd() extends InputBundle {
   val opcode = Bits(7 bits)
   val rd = Bits(5 bits)
   val tags = Bits(3 bits)
@@ -575,11 +576,125 @@ case class ExampleCmd() extends InputBundle {
   val funct = Bits(7 bits)
 }
 \end{lstlisting}
-Note that the Bundle \code{ExampleCmd} represents the introduced R-instruction type from Figure \ref*{fig:riscv_r_type}. The coprocessor
+Note that the Bundle \code{Cmd} represents the introduced R-instruction type from Figure \ref*{fig:riscv_r_type}. The coprocessor
 however is not limited to the predefined types, which means
-that other definitions are also possible.
+that other interpretations of $instr[31:0]$ are possible.
+The response payload is 32 bits wide and will be written to the register
+specified in ``rd''.
 
-\section{Acceleration Evaluation}
+As an example the emitted Verilog code for a coprocessor with an instruction 
+function ``AES'' looks as follows:
+\begin{lstlisting}[language=Verilog]
+module Coprocessor (
+  input aes_comm_cmd_valid,
+  output reg aes_comm_cmd_ready,
+  input [31:0] aes_comm_cmd_payload_cpuRS1,
+  input [31:0] aes_comm_cmd_payload_cpuRS2,
+  input [6:0] aes_comm_cmd_payload_opcode,
+  input [4:0] aes_comm_cmd_payload_rd,
+  input [2:0] aes_comm_cmd_payload_tags,
+  input [4:0] aes_comm_cmd_payload_rs1,
+  input [4:0] aes_comm_cmd_payload_rs2,
+  input [6:0] aes_comm_cmd_payload_funct,
+  output aes_comm_rsp_valid,
+  input aes_comm_rsp_ready,
+  output reg [31:0] aes_comm_rsp_payload_data,
+  input clk,
+  input reset);
+
+  [...]
+endmodule
+\end{lstlisting}
+The signals which start with \code{aes\_comm\_cmd} control the
+communication from the CCOPI plugin to the coprocessor (command). The
+response signals start with the pattern \code{aes\_comm\_rsp}.
+
+In addition the CCOPI plugin adds the three signals \code{\{decode,
+execute, memory\}\_cocpu\_aes} to the VexRiscv component. These signals are
+set to ``high'' when the pipeline executes an instruction for the
+coprocessor.
+
+\paragraph{CPU generation.} In SpinalHDL a class which inherits
+\code{Component} can be used to generate Verilog or VHDL code. In the
+CPU implementation the class \code{VexRiscv} can be used for this
+purpose. The list of plugins must be passed as a parameter:
+\begin{lstlisting}
+def cpu() = new VexRiscv(
+  config = VexRiscvConfig(plugins = List(
+      [...]
+      new CoProcessorPlugin(new Cocpu1())
+      new CoProcessorPlugin(new Cocpu2())
+  ))
+)
+\end{lstlisting}
+The CPU can be generated with the following command and will generate
+the file \code{VexRiscv.v}:
+\begin{lstlisting}
+SpinalVerilog(cpu()) // VexRiscv.v
+\end{lstlisting}
+
+\subsection{Coprocessors}
+In the previous chapter the plugin mechanism of VexRiscv and the
+communication of the CCOPI plugin was shown. With CCOPI it is possible
+create coprocessors and instruction functions in an object oriented way.
+
+A coprocessor is a class which inherits the class
+\code{CoProcessor}.
+Inside this class it is possible to create instruction functions which are
+bound to a specific instruction pattern.
+
+\begin{lstlisting}[language=scala]
+def aes = new InstructionFunction[Cmd, Rsp]
+          (new Cmd(), new Rsp()) {
+  val pattern: String = s"-----------------" +
+                         "000-----${custom0}"
+  val name: String = "aes"
+  val description: String = "AES impl."
+
+  def build(c: EventController): Unit = {
+    /** AES implementation */
+  }
+}
+
+def setup(): Unit = {
+  activate(aes)
+}
+\end{lstlisting}
+The code example above shows an instruction function named ``aes'' which
+is bound to the custom0 opcode. The function \code{build()} must be
+implemented and contains the hardware specific code of the instruction
+function. Each of them must be activated in the \code{setup()} method 
+of the coprocessor to indicate SpinalHDL to generate the corresponding
+Verilog code.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+    Signal name & Type & Mode \\
+    \hline
+    command & \code{Cmd} & Read-Only \\
+    response & \code{Rsp} & Read/Write\\
+    done & \code{Bool} & Read-Only\\
+    flush & \code{Bool} & Read/Write
+\end{tabular}
+    \caption{Automatically included signals in \code{build()}}
+    \label{tab:signals}
+\end{table}
+Table \ref*{tab:signals} shows four signals which gets automatically
+included in every \code{build()} function. The signal type of
+``command''
+and ``response'' depends on the definition of
+\code{InstructionFunction}. To control the state of the coprocessor,
+``done'' and ``flush'' can be used:
+\begin{itemize}
+    \item done -- False, if the instruction function is busy, True
+        otherwise
+    \item flush -- User-settable Bool value to signal that the response
+        can be transferred to the CPU.
+\end{itemize}
+
+\section{Outlook}
+\section{Conclusion}
 
 \bibliographystyle{unsrt}
 \bibliography{literature}
