@@ -25,6 +25,7 @@ package vexriscv.ccopi
 import spinal.core.SpinalVerilog
 import spinal.core._
 import spinal.lib._
+import spinal.lib.misc.InterruptCtrl
 import vexriscv._
 import vexriscv.plugin._
 import vexriscv.ccopi._
@@ -32,7 +33,7 @@ import vexriscv.ccopi._
 import scala.collection.mutable.ArrayBuffer
 
 case class CoprocessorConfig(cpuPlugins : ArrayBuffer[Plugin[VexRiscv]],
-                             cocpuPlugin : Plugin[VexRiscv]) {
+                             cocpuPlugins : ArrayBuffer[Plugin[VexRiscv]]) {
 
 }
 
@@ -81,7 +82,12 @@ object CoprocessorConfig {
       ),
       new YamlPlugin("cpu0.yaml")
     ),
-    cocpuPlugin = new CoProcessorPlugin(new TestCompUnit())) // Define the Coprocessor
+
+    cocpuPlugins = ArrayBuffer(
+      new CoProcessorPlugin(new CoProcessorEx0()),
+      new CoProcessorPlugin(new CoProcessorEx1())
+    )
+  )
 }
 
 case class VexRiscvWithCocpu(config: CoprocessorConfig) {
@@ -89,7 +95,7 @@ case class VexRiscvWithCocpu(config: CoprocessorConfig) {
 
   def cpu = new VexRiscv(
     config = VexRiscvConfig(
-      plugins = cpuPlugins += cocpuPlugin
+      plugins = cpuPlugins ++ cocpuPlugins
     )
   )
 }

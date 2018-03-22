@@ -27,13 +27,9 @@ import spinal.core._
 /**
   * The class which defines a co-processor event.
   */
-class CoProcessorEvent() extends Area {
+class CoProcessorEvent(name : String) extends Area {
 
-  // User settable value `fire` signals the state if the co processor
-  // event.
-  // If fire is true the current event is executed at the moment. If the
-  // execution is finished the user needs to set `fire` to False.
-  val fire = RegInit(False)
+  setWeakName(name)
 
   def outsideCondScope[T](that : => T) : T = {
     val body = Component.current.dslBody

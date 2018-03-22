@@ -35,16 +35,18 @@ trait  EventController {
   var eventController : EventController = this
 
   val events = new ArrayBuffer[CoProcessorEvent]
-  events ++= List.fill(2)(new CoProcessorEvent())
+  events += new CoProcessorEvent("prepare")
+  events += new CoProcessorEvent("exec")
 
-  // The different events a co-processor can handle
-  val prepare :: idle :: Nil = events.toList
+  val prepare = events(0)
+  val exec = events(1)
 
   def build() : Unit = {
     coprocessor.eventController = this
     coprocessor.setup()
 
     // All functions are registered at this point
+    coprocessor.functions.foreach(f => f.setup())
     coprocessor.functions.foreach(f => f.build(eventController))
   }
 

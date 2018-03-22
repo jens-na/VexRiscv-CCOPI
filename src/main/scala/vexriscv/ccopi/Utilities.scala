@@ -51,6 +51,13 @@ object Utilities {
   implicit class MaskedLiteralConversion(val s : String) {
     def asMaskedLiteral : MaskedLiteral = MaskedLiteral.apply(s)
   }
+
+  implicit class CompositeNameReverse(val a : Area) {
+    def setCompositeNameRv(prefix : String, nameable: Nameable) : this.type = {
+      a.setWeakName(s"${prefix}_event_${nameable.getDisplayName()}").reflectNames()
+      this
+    }
+  }
 }
 
 class CoCpuData[T <: Data](val dataType : T) extends HardType[T](dataType) with Nameable{

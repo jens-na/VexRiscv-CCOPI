@@ -24,6 +24,7 @@ package vexriscv.ccopi
 
 import spinal.core._
 import spinal.lib._
+import Utilities._
 
 trait FunctionDef extends Nameable {
   val pattern : String // Required
@@ -83,13 +84,14 @@ abstract class InstructionFunction[+A <: InputBundle, +B <: OutputBundle](dtCmd 
     }
   }
 
-  // Set weak names for debug purposes
-  io.cmd.setWeakName("cmd")
-  io.rsp.setWeakName("rsp")
-  io.interrupt.setWeakName("interrupt")
-  flush.setWeakName("flush")
-  done.setWeakName("done")
-  cmdPayloadReg.setWeakName("cmdPayloadReg")
+  def setup(): Unit = {
+    io.cmd.setWeakName(s"${name}_communication_cmd")
+    io.rsp.setWeakName(s"${name}_communication_rsp")
+    io.interrupt.setWeakName(s"${name}_communication_interrupt")
+    flush.setWeakName(s"${name}_communication_flush")
+    done.setWeakName(s"${name}_communication_done")
+    cmdPayloadReg.setWeakName(s"${name}_communication_cmdPayloadReg")
+  }
 
 
   def build(controller : EventController) : Unit
@@ -99,6 +101,6 @@ abstract class InstructionFunction[+A <: InputBundle, +B <: OutputBundle](dtCmd 
     * @param ev the event to define
     */
   implicit class implicitsEvent(ev: CoProcessorEvent){
-    def event[T <: Area](area : T) : T = {area.setCompositeName(ev,getName()).reflectNames();area}
+    def event[T <: Area](area : T) : T = {area.setCompositeNameRv(getName(), ev);area}
   }
 }

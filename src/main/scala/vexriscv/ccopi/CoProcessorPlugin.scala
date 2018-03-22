@@ -47,6 +47,7 @@ class CoProcessorPlugin(c : CoProcessor) extends Plugin[VexRiscv] {
     import pipeline.config._
 
     cocpu = new CoProcessorComp(c)
+    cocpu.setDefinitionName("Coprocessor")
 
     // Collect functions
     functions = cocpu.coprocessor.functions

@@ -22,16 +22,16 @@
  */
 package vexriscv.ccopi
 
-import spinal.core.{B, _}
+import spinal.core._
 import spinal.lib.Counter
 import vexriscv.ccopi.CustomOpcodes._
 
 /**
   * Created by jens on 28.11.17.
   */
-class TestCompUnit extends CoProcessor {
+class CoProcessorEx0 extends CoProcessor {
 
-  case class AESCmd() extends InputBundle {
+  case class Ex0Cmd() extends InputBundle {
     val opcode = Bits(7 bits)
     val rd = Bits(5 bits)
     val tags = Bits(3 bits)
@@ -40,31 +40,25 @@ class TestCompUnit extends CoProcessor {
     val funct = Bits(7 bits)
   }
 
-  case class AESRsp() extends OutputBundle {
+  case class Ex0Rsp() extends OutputBundle {
     val data = Bits(32 bits)
   }
 
-  def f0 = new InstructionFunction[AESCmd, InterruptBundle](new AESCmd(), new InterruptBundle()) {
-    val pattern: String = s"-----------------000-----${custom0}"
-    val name: String = "f0"
-    val description: String = "f0 description"
+  def aes = new InstructionFunction[Ex0Cmd, Ex0Rsp](new Ex0Cmd(), new Ex0Rsp()) {
+    val pattern: String = s"0000000----------000-----${custom0}"
+    val name: String = "ex0"
+    val description: String = "Example Coprocessor"
 
     def build(controller: EventController): Unit = {
 
       val regs = controller.prepare event new Area {
-        val ramKey = Mem(Bits(32 bits), 4)
-        val ramData = Mem(Bits(32 bits), 4)
-        val ramResult = Mem(Bits(32 bits), 4)
+        val result = Reg(UInt(32 bits))
       }
 
-      val exec = controller.idle event new Area {
-        val funct = command.funct
-        val internalAddr = command.rs1.asUInt.resize(2)
-        val defaultResponse = False.asBits(32 bits)
-        val counter = Counter(12)
-        counter.setWeakName("counter")
-        //val funcAesStoreKey = (funct === B"0000001")
-        //val funcAesStoreData = (funct === B"0000010")
+      val exec = controller.exec event new Area {
+        val counter = Counter(50)
+        regs.result := (command.cpuRS1.asUInt + command.cpuRS2.asUInt)
+        response.data := regs.result.asBits
 
         when(counter.willOverflowIfInc) {
           flush := True
@@ -75,13 +69,11 @@ class TestCompUnit extends CoProcessor {
         }.otherwise {
           counter.clear()
         }
-
       }
     }
   }
 
   def setup(): Unit = {
-    activate(f0)
+    activate(aes)
   }
-
 }
