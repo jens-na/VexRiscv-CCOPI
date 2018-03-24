@@ -38,6 +38,8 @@ object CustomOpcodes {
 
 object Utilities {
 
+  def XLEN = 32
+
     /**
     * Converts a `String` into a Spinal `MaskedLiteral` object. Can
     * be used to on any String instance.
