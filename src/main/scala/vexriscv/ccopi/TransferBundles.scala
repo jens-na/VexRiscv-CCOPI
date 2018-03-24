@@ -23,11 +23,12 @@
 package vexriscv.ccopi
 
 import spinal.core._
+import Utilities._
 
 
 class InputBundle extends Bundle {
-  val cpuRS1 = Bits(32 bits)
-  val cpuRS2 = Bits(32 bits)
+  val cpuRS1 = Bits(XLEN bits)
+  val cpuRS2 = Bits(XLEN bits)
 }
 
 class OutputBundle extends Bundle
