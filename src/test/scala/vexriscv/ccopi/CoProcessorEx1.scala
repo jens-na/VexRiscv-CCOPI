@@ -31,7 +31,7 @@ import vexriscv.ccopi.CustomOpcodes._
   */
 class CoProcessorEx1 extends CoProcessor {
 
-  case class Ex1Cmd() extends InputBundle {
+  case class Cmd() extends InputBundle {
     val opcode = Bits(7 bits)
     val rd = Bits(5 bits)
     val funct3 = Bits(3 bits)
@@ -41,11 +41,11 @@ class CoProcessorEx1 extends CoProcessor {
     val funct2 = Bits(2 bits)
   }
 
-  case class Ex1Rsp() extends OutputBundle {
+  case class Rsp() extends OutputBundle {
     val data = Bits(32 bits)
   }
 
-  def aes = new InstructionFunction[Ex1Cmd, Ex1Rsp](new Ex1Cmd(), new Ex1Rsp()) {
+  def ex1 = new InstructionFunction[Cmd, Rsp](new Cmd(), new Rsp()) {
     val pattern: String = s"00---------------001-----${custom0}"
     val name: String = "ex1"
     val description: String = "Example Coprocessor"
@@ -60,8 +60,10 @@ class CoProcessorEx1 extends CoProcessor {
       val exec = controller.exec event new Area {
         val counter = Counter(50)
 
-        val romReadAddr = command.intRomAddr.asUInt.resize(2)
-        val romRead = regs.internalRom.readAsync(romReadAddr)
+        val romReadAddr = command.intRomAddr
+          .asUInt.resize(2)
+        val romRead = regs.internalRom
+          .readAsync(romReadAddr)
         response.data := (command.cpuRS1.asUInt + command.cpuRS2.asUInt + romRead.asUInt).asBits
 
         when(counter.willOverflowIfInc) {
@@ -78,6 +80,6 @@ class CoProcessorEx1 extends CoProcessor {
   }
 
   def setup(): Unit = {
-    activate(aes)
+    activate(ex1)
   }
 }

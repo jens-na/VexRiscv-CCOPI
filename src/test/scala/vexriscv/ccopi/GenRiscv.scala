@@ -84,8 +84,7 @@ object CoprocessorConfig {
     ),
 
     cocpuPlugins = ArrayBuffer(
-      new CoProcessorPlugin(new CoProcessorEx0()),
-      new CoProcessorPlugin(new CoProcessorEx1())
+      new CoProcessorPlugin(new CoProcessorEx0())
     )
   )
 }

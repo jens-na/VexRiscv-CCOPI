@@ -52,24 +52,13 @@ class CoProcessorEx0 extends CoProcessor {
     def build(controller: EventController): Unit = {
 
       val regs = controller.prepare event new Area {
-        val result = Reg(UInt(32 bits))
       }
 
       val exec = controller.exec event new Area {
-        val counter = Counter(50)
-        regs.result := (command.cpuRS1.asUInt + command.cpuRS2.asUInt)
-        response.data := regs.result.asBits
-
-        when(counter.willOverflowIfInc) {
-          flush := True
-        }
-
-        when(!done) {
-          counter.increment()
-        }.otherwise {
-          counter.clear()
-        }
+        response.data := False.asBits(32 bits)
+        flush := True
       }
+
     }
   }
 
