@@ -1,0 +1,17 @@
+\begin{lstlisting}[language=scala]
+def aes = new InstructionFunction[Cmd, Rsp]
+          (new Cmd(), new Rsp()) {
+  val pattern: String = s"-----------------" +
+                         "000-----${custom0}"
+  val name: String = "aes"
+  val description: String = "AES impl."
+
+  def build(c: EventController): Unit = {
+    /** AES implementation */
+  }
+}
+
+def setup(): Unit = {
+  activate(aes)
+}
+\end{lstlisting}
