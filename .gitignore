@@ -168,6 +168,9 @@ cpu0.yaml
 #
 # Created by https://www.gitignore.io/api/latex
 
+paper/svg-inkscape/
+paper/build/
+
 ### LaTeX ###
 ## Core latex/pdflatex auxiliary files:
 *.aux
