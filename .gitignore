@@ -399,3 +399,9 @@ TSWLatexianTemp*
 # End of https://www.gitignore.io/api/latex
 
 # End of https://www.gitignore.io/api/sbt,vim,emacs,intellij
+
+src/test/cpp/verilator/obj_dir/*
+src/test/cpp/verilator/*.logTrace
+src/test/cpp/verilator/*.vcd
+
+src/test/cpp/custom/*/build/*
