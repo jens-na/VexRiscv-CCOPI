@@ -70,7 +70,7 @@
 	\renewcommand{\abstracttextfont}{\normalfont\small\itshape}
 
 % URL bibtex breaks
-\def\UrlBreaks{\do\/\do-}
+\def\UrlBreaks{\do\/\do-\do9}
 
 % ------
 % Maketitle metadata
@@ -484,6 +484,8 @@ between VexRiscv and the coprocessor takes place in the execute- and
 memory-stage specific pipeline areas.
 
 \section{CCOPI}
+\subsection{Communication}
+\label{sec:ccopi-communication}
 CCOPI is the name of the custom coprocessor interface for the RISC-V
 implementation VexRiscv. It is designed to satisfy the following basic
 principles:
@@ -503,7 +505,11 @@ instruction functions:
 Both instruction functions use the custom-0 opcode, but the patterns
 differ at $instr[14:12]$ (funct3). The ``-'' signs represent ``Don't-care
 bits'' which are not relevant for the decoding process.
-
+\begin{figure}[h]
+    \includegraphics[scale=0.68]{includes/ccopi_plugin}
+    \caption{Component structure}
+    \label{fig:component_structure}
+\end{figure}
 \paragraph{Decoder registration.} Since CCOPI is a VexRiscv plugin,
 it is possible to register the
 instruction patterns at the decoder service of the CPU implementation.
@@ -516,11 +522,7 @@ decoder.add(...)
 Once the patterns are registered, the decoder of VexRiscv is able to
 decode the instruction functions of CCOPI.
 
-\begin{figure}[ht]
-    \includegraphics[scale=0.68]{includes/ccopi_plugin}
-    \caption{Component structure}
-    \label{fig:component_structure}
-\end{figure}
+
 
 \paragraph{Pipeline modifications.}
 Figure \ref*{fig:component_structure} shows that the coprocessor 
@@ -585,7 +587,7 @@ function ``AES'' looks as follows:
 \begin{lstlisting}[language=Verilog]
 module Coprocessor (
   input aes_comm_cmd_valid,
-  output reg aes_comm_cmd_ready,
+  output reg aes_communication_cmd_ready,
   input [31:0] aes_comm_cmd_payload_cpuRS1,
   input [31:0] aes_comm_cmd_payload_cpuRS2,
   input [6:0] aes_comm_cmd_payload_opcode,
@@ -603,9 +605,10 @@ module Coprocessor (
   [...]
 endmodule
 \end{lstlisting}
-The signals, which start with ``\code{aes\_comm\_cmd}'' control the
+The signals, which start with ``\code{aes\_communication\_cmd}'', in
+the Verilog code above shortened to ``\code{aes\_comm\_cmd}'', control the
 communication from the CCOPI plugin to the coprocessor (command). The
-response signals start with the pattern ``\code{aes\_comm\_rsp}''.
+response signals start with the pattern ``\code{aes\_communication\_rsp}''.
 
 In addition, the CCOPI plugin adds the three signals ``\code{\{decode,
 execute, memory\}\_cocpu\_aes}'' to the VexRiscv component. These signals are
@@ -698,44 +701,100 @@ In the example above a ROM with three values is initialized in the
 the stalling process of the CPU pipeline. The counter is used to delay the
 response flush for 50 cycles.
 \paragraph{Usage.}
+To use  CCOPI in an Assembler or C application it is necessary to
+introduce a new instruction with \code{\#define} statements:
+
+\begin{lstlisting}
+#define ccopi_type_insn(_f2, _f5, _rs2, _rs1, \
+                        _f3, _rd, _opc) \
+.word ( ((_f2)  << 30) | ((_f5)  << 25) | \
+        ((_rs2) << 20) | ((_rs1) << 15) | \ 
+        ((_f3)  << 12) | ((_rd)  <<  7) | \ 
+        ((_opc) << 0))
+
+#define ccopicmd1(_rd, _rs1, _rs2, _iaddr) \
+ccopi_type_insn(0b00, _iaddr, _rs2, _rs1, \
+                0b001, _rd, 0b0001011)
+\end{lstlisting}
+The code snippet above defines a new instruction type, where the
+most significant seven bits (\code{\_f7}) are split into two 
+(\code{\_f2}) and five (\code{\_f5}) bits. In the second \code{\#define}
+statement the command \code{ccopicmd1} with the parameters \code{\_rd},
+\code{\_rs1}, \code{\_rs2}, and \code{\_iaddr} is introduced.
+The internal ROM address of the detailed example can be controlled 
+with the \code{\_iaddr} parameter.
 
 \paragraph{Signal naming.} 
 A lot of effort has been put into giving the signals reasonable names.
-``ex1'' is the name of the instruction function in the detailed example
-above. Each signal, which belongs to this specific instruction function
-starts with ``\code{ex1\_}''.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=6cm]{includes/gtkwave.png}
+    \caption{GTKWave screenshot}
+    \label{fig:gtkwave}
+\end{figure}
+
+\noindent ``ex1'' is the name of the instruction function in the detailed example
+above. For this reason, each signal, which belongs to this specific 
+instruction function, starts with ``\code{ex1\_}'', followed by the area 
+where the signal is defined:
+\begin{itemize}
+    \item \code{ex1\_prepare\_<signal-name>}
+    \item \code{ex1\_exec\_<signal-name>}
+    \item \code{ex1\_communication\_<signal-name>}
+\end{itemize}
+The last point in the list is the signal pattern, which controls the
+internal communication of CCOPI and has already been discussed in
+\ref{sec:ccopi-communication}.
+
+Consistent signal names are very helpful for hardware simulation and
+debug purposes. Tools like ``Verilator'' use the signal names to
+produce a VCD-Trace, which afterwards can be analyzed with a Waveform
+viewer like ``GTKWave''. Figure \ref*{fig:gtkwave} shows a GTKWave
+screenshot with CCOPI signals. 
+
 
 \section{Parameters}
-Another advantage of CCOPI is the small overhead its generates in matter of 
-hardware size and communication latency. Since the size of a result computed 
-by an coprocessor is known before the actual hardware is generated, the result 
-can be transmitted within one clock cycle via the Ready/Valid Interface.
+Another advantage of CCOPI is the small overhead in terms of 
+hardware size and communication latency. Since the size of a result 
+computed  by a coprocessor is known before the actual hardware is 
+generated, the result can be transferred within one clock cycle via the 
+Ready/Valid Interface.
 
-The required number of LUTs and flip-flops for VexRiscv depends on the Plugins 
-it uses. For example extensions for pipeline hazard managment or debugging can 
-be added. For test purposes a minimal configuration was chosen, which needed a 
-total of 500 LUTs and 592 flip-flops on an Artix-7 FPGA. After adding an trivial 
-Custom Coprocessor, which solely fills the destination registers with zeros, to 
-VexRiscv only an additional amount of 34 LUTs and 2 flip-flops were needed. This
-is a rather low price for the huge amount of flexibility which CCOPI
-offers.
+The required number of Lookup tables (LUT) and Flip-Flops for VexRiscv 
+depends on the active plugins. For test purposes a minimal configuration 
+was chosen, which needs a total of 500 LUTs and 592 Flip-Flops on an 
+Artix-7 FPGA. After adding a trivial coprocessor with CCOPI, which 
+fills the destination register with zeros, only 34 additional LUTs and 
+two more Flip-Flops are needed. This is a rather low price for the huge 
+amount of flexibility CCOPI offers.
+
 \section{Future Work}
+At the moment CCOPI handles the communication for a synchronous
+execution, which means that the CPU pipeline is stalled while the
+coprocessor is busy. In the future it should be possible to use
+interrupts with the Platform Level Interrupt Controller (PLIC) 
+to signal that the result of the coprocessor has been 
+determined~\cite{riscv_priv}. With this feature an asynchronous 
+execution of one or more coprocessors would be possible. 
 
 \section{Conclusion}
 This paper described the implementation of the custom coprocessor
 interface CCOPI and its integration in the RISC-V implementation
-VexRiscv. SpinalHDL was used as the hardware description language
+VexRiscv. SpinalHDL was used as the hardware description language,
 which offers the possibility to define high level hardware designs.
 
 CCOPI manages the communication between VexRiscv and a specified
-coprocessor. Due to the use of object oriented programming patterns
-CCOPI and its interfaces like \code{CoProcessor} or
-\code{InstrctionFunction} is also a tool to help developers build
-coprocessors. With this in mind it is possible to create a unique
+coprocessor automatically. A developer of a coprocessor no longer needs
+to worry about the Ready/Valid interface or pipeline stalls. Even in the
+leading RISC-V implementation ``Rocket chip'' the communication must be
+controlled by the developer,
+which makes CCOPI an unique coprocessor interface with a built-in
+communication abstraction layer~\cite{rocket-chip_rocc}.
+
+With this in mind it is possible to create an unique
 RISC-V CPU with a set of additional functions. As a result, the integration of
 existing hardware implementations, like AES, can be achieved in a 
 time-efficient way. 
-\vfill
 
 \bibliographystyle{unsrt}
 \bibliography{literature}
