@@ -3,8 +3,7 @@ scala:
     - 2.11.6
 jdk:
     - oraclejdk8
-
--script:
+script:
     - script/install-deps.sh
     - sbt test
     - sbt "test:run-main vexriscv.ccopi.GenVexRiscvWithCCOPI"
