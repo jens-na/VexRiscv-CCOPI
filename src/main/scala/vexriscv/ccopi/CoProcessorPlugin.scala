@@ -78,10 +78,11 @@ class CoProcessorPlugin(c : CoProcessor) extends Plugin[VexRiscv] {
       )
     }
 
-    val csr = pipeline.service(classOf[CsrPlugin])
-    for((func, stageable) <- stageables) {
-      csr.pluginInterrupt setWhen(func.io.interrupt)
-    }
+    // Async exec
+    // val csr = pipeline.service(classOf[CsrPlugin])
+    // for((func, stageable) <- stageables) {
+    //   csr.pluginInterrupt setWhen(func.io.interrupt)
+    // }
   }
 
   def build(pipeline: VexRiscv): Unit = {

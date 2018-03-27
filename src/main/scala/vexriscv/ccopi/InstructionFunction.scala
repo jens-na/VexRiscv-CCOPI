@@ -38,10 +38,10 @@ abstract class InstructionFunction[+A <: InputBundle, +B <: OutputBundle](dtCmd 
   val io = new Bundle {
     val cmd = slave Stream (dtCmd.asInstanceOf[InputBundle])
     val rsp = master Stream (dtRsp.asInstanceOf[OutputBundle])
-    val interrupt = out Bool
+    // val interrupt = out Bool
   }
 
-  val interruptCtl = dtRsp.isInstanceOf[InterruptBundle]
+  // val interruptCtl = dtRsp.isInstanceOf[InterruptBundle]
 
   // Payload of the command, prepared as specific bundle
   private[this] val cmdPayloadReg = Reg(Bits(io.cmd.payload.getBitsWidth bits))
@@ -55,11 +55,11 @@ abstract class InstructionFunction[+A <: InputBundle, +B <: OutputBundle](dtCmd 
   val flush = RegInit(False)
   val done = RegInit(True)
 
-  if(interruptCtl) {
-    io.interrupt := flush
-  } else {
-    io.interrupt := False
-  }
+  // if(interruptCtl) {
+  //  io.interrupt := flush
+  // } else {
+  //  io.interrupt := False
+  //}
 
   // Communication of the Ready/Valid-Interface
   io.cmd.ready := False
@@ -87,7 +87,7 @@ abstract class InstructionFunction[+A <: InputBundle, +B <: OutputBundle](dtCmd 
   def setup(): Unit = {
     io.cmd.setWeakName(s"${name}_communication_cmd")
     io.rsp.setWeakName(s"${name}_communication_rsp")
-    io.interrupt.setWeakName(s"${name}_communication_interrupt")
+    // io.interrupt.setWeakName(s"${name}_communication_interrupt")
     flush.setWeakName(s"${name}_communication_flush")
     done.setWeakName(s"${name}_communication_done")
     cmdPayloadReg.setWeakName(s"${name}_communication_cmdPayloadReg")
