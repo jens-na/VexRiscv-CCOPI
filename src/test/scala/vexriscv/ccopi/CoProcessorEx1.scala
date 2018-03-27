@@ -1,3 +1,5 @@
+package vexriscv.ccopi
+
 /*
  * The MIT License (MIT)
  * Copyright (c) 2017, Jens Nazarenus, Dominik Swierzy
@@ -20,8 +22,6 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package vexriscv.ccopi
-
 import spinal.core._
 import spinal.lib.Counter
 import vexriscv.ccopi.CustomOpcodes._

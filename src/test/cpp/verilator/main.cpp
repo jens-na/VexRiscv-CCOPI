@@ -1726,7 +1726,7 @@ int main(int argc, char **argv, char **env) {
 
         redo(REDO,Workspace("custom-test-001").loadHex("../custom/custom-test-001/build/custom-test-001.hex")->bootAt(0x00000000u)->run(50e3););
 
-        redo(REDO,Workspace("custom-test-002").loadHex("../custom/custom-test-001/build/custom-test-002.hex")->bootAt(0x00000000u)->run(50e4););
+        //redo(REDO,Workspace("custom-test-002").loadHex("../custom/custom-test-002/build/custom-test-002.hex")->bootAt(0x00000000u)->run(50e4););
 
 
 		#ifdef DHRYSTONE
@@ -1759,14 +1759,17 @@ int main(int argc, char **argv, char **env) {
 	}
 
 	uint64_t duration = timer_end(startedAt);
+    uint64_t exitCode = 0;
 	cout << endl << "****************************************************************" << endl;
 	cout << "Had simulate " << Workspace::cycles << " clock cycles in " << duration*1e-9 << " s (" << Workspace::cycles / (duration*1e-6) << " Khz)" << endl;
-	if(Workspace::successCounter == Workspace::testsCounter)
+	if(Workspace::successCounter == Workspace::testsCounter)  {
 		cout << "SUCCESS " << Workspace::successCounter << "/" << Workspace::testsCounter << endl;
-	else
+        exitCode = 0;
+    } else {
 		cout<< "FAILURE " << Workspace::testsCounter - Workspace::successCounter << "/"  << Workspace::testsCounter << endl;
+        exitCode = 1;
+    }
 	cout << "****************************************************************" << endl << endl;
-
-
-	exit(0);
+    
+    exit(exitCode);
 }
