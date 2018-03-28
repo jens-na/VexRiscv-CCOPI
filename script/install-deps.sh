@@ -3,6 +3,7 @@
 # RISC-V toolchain
 sudo apt-get install autoconf automake autotools-dev curl device-tree-compiler libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev
 curl -O -L "https://github.com/jens-na/riscv-tools-precompiled/blob/master/builds/build-rv32ima.tar.gz.[00-14]?raw=true"
+sudo mkdir -p /opt/riscv
 sudo cat build-rv32ima.tar.gz.* | tar xzf - -C /opt/riscv
 
 find /opt/riscv
