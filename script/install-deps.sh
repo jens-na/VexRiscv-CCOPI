@@ -1,15 +1,11 @@
 #!/bin/bash
 
-# RISC-V toolchain dependencies
-sudo apt-get install autoconf automake autotools-dev curl device-tree-compiler libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev
-
 # RISC-V toolchain
-git clone https://github.com/riscv/riscv-tools.git
-cd riscv-tools
-git submodule update --init --recursive
-export RISCV=/opt/riscv
-./build-rv32ima.sh
-cd ..
+sudo apt-get install autoconf automake autotools-dev curl device-tree-compiler libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev
+curl -O -L "https://github.com/jens-na/riscv-tools-precompiled/blob/master/builds/build-rv32ima.tar.gz.[00-14]?raw=true"
+sudo cat build-rv32ima.tar.gz.* | tar xzf - -C /opt/riscv
+
+find /opt/riscv
 
 # Verilator
 git clone http://git.veripool.org/git/verilator
