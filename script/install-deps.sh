@@ -11,7 +11,7 @@ sudo make install
 # mpfr
 wget http://www.mpfr.org/mpfr-current/mpfr-4.0.1.tar.gz
 tar -xvf mpfr-4.0.1.tar.gz
-cd mpfr-4.0.1.tar.gz
+cd mpfr-4.0.1
 ./configure
 make
 sudo make install
