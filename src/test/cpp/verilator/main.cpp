@@ -371,9 +371,9 @@ public:
 		resetDone = true;
 
 		#ifdef  REF
-		if(bootPc != -1) top->VexRiscv->core->prefetch_pc = bootPc;
+		if(bootPc != -1) top->v->core->prefetch_pc = bootPc;
 		#else
-		if(bootPc != -1) top->VexRiscv->prefetch_PcManagerSimplePlugin_pcReg = bootPc;
+		if(bootPc != -1) top->v->prefetch_PcManagerSimplePlugin_pcReg = bootPc;
 		#endif
 
 
@@ -417,22 +417,22 @@ public:
 
 
 
-				if(top->VexRiscv->writeBack_RegFilePlugin_regFileWrite_valid == 1 && top->VexRiscv->writeBack_RegFilePlugin_regFileWrite_payload_address != 0){
+				if(top->v->writeBack_RegFilePlugin_regFileWrite_valid == 1 && top->v->writeBack_RegFilePlugin_regFileWrite_payload_address != 0){
 					regTraces <<
 						#ifdef TRACE_WITH_TIME
 						currentTime <<
 						 #endif
-						 " PC " << hex << setw(8) <<  top->VexRiscv->writeBack_PC << " : reg[" << dec << setw(2) << (uint32_t)top->VexRiscv->writeBack_RegFilePlugin_regFileWrite_payload_address << "] = " << hex << setw(8) << top->VexRiscv->writeBack_RegFilePlugin_regFileWrite_payload_data << endl;
+						 " PC " << hex << setw(8) <<  top->v->writeBack_PC << " : reg[" << dec << setw(2) << (uint32_t)top->v->writeBack_RegFilePlugin_regFileWrite_payload_address << "] = " << hex << setw(8) << top->v->writeBack_RegFilePlugin_regFileWrite_payload_data << endl;
 				}
 
 				for(SimElement* simElement : simElements) simElement->preCycle();
 
 				if(withInstructionReadCheck){
-					if(top->VexRiscv->decode_arbitration_isValid && !top->VexRiscv->decode_arbitration_haltItself){
+					if(top->v->decode_arbitration_isValid && !top->v->decode_arbitration_haltItself){
 						uint32_t expectedData;
 						bool dummy;
-						iBusAccess(top->VexRiscv->decode_PC, &expectedData, &dummy);
-						assertEq(top->VexRiscv->decode_INSTRUCTION,expectedData);
+						iBusAccess(top->v->decode_PC, &expectedData, &dummy);
+						assertEq(top->v->decode_INSTRUCTION,expectedData);
 					}
 				}
 
@@ -801,12 +801,12 @@ public:
 	    VL_IN8(io_cpu_execute_args_invalidate,0,0);
 	    VL_IN8(io_cpu_execute_args_way,0,0);
 
-//		if(top->VexRiscv->dataCache_1->io_cpu_execute_isValid && !top->VexRiscv->dataCache_1->io_cpu_execute_isStuck
-//				&& top->VexRiscv->dataCache_1->io_cpu_execute_args_wr){
-//			if(top->VexRiscv->dataCache_1->io_cpu_execute_args_address == 0x80025978)
-//				cout << "WR 0x80025978 = " << hex << setw(8) << top->VexRiscv->dataCache_1->io_cpu_execute_args_data << endl;
-//			if(top->VexRiscv->dataCache_1->io_cpu_execute_args_address == 0x8002596c)
-//				cout << "WR 0x8002596c = " << hex << setw(8) << top->VexRiscv->dataCache_1->io_cpu_execute_args_data << endl;
+//		if(top->v->dataCache_1->io_cpu_execute_isValid && !top->v->dataCache_1->io_cpu_execute_isStuck
+//				&& top->v->dataCache_1->io_cpu_execute_args_wr){
+//			if(top->v->dataCache_1->io_cpu_execute_args_address == 0x80025978)
+//				cout << "WR 0x80025978 = " << hex << setw(8) << top->v->dataCache_1->io_cpu_execute_args_data << endl;
+//			if(top->v->dataCache_1->io_cpu_execute_args_address == 0x8002596c)
+//				cout << "WR 0x8002596c = " << hex << setw(8) << top->v->dataCache_1->io_cpu_execute_args_data << endl;
 //		}
 		if (top->dBus_cmd_valid && top->dBus_cmd_ready) {
 			if(pendingCount == 0){
@@ -1244,9 +1244,9 @@ public:
 	}
 
 	virtual void checks(){
-		if(top->VexRiscv->writeBack_RegFilePlugin_regFileWrite_valid == 1 && top->VexRiscv->writeBack_RegFilePlugin_regFileWrite_payload_address != 0){
-			assertEq(top->VexRiscv->writeBack_RegFilePlugin_regFileWrite_payload_address, regFileWriteRefArray[regFileWriteRefIndex][0]);
-			assertEq(top->VexRiscv->writeBack_RegFilePlugin_regFileWrite_payload_data, regFileWriteRefArray[regFileWriteRefIndex][1]);
+		if(top->v->writeBack_RegFilePlugin_regFileWrite_valid == 1 && top->v->writeBack_RegFilePlugin_regFileWrite_payload_address != 0){
+			assertEq(top->v->writeBack_RegFilePlugin_regFileWrite_payload_address, regFileWriteRefArray[regFileWriteRefIndex][0]);
+			assertEq(top->v->writeBack_RegFilePlugin_regFileWrite_payload_data, regFileWriteRefArray[regFileWriteRefIndex][1]);
 			//printf("%d\n",i);
 
 			regFileWriteRefIndex++;
@@ -1270,8 +1270,8 @@ public:
 	}
 
 	virtual void checks(){
-		if(top->VexRiscv->writeBack_RegFilePlugin_regFileWrite_valid == 1 && top->VexRiscv->writeBack_RegFilePlugin_regFileWrite_payload_address == 28){
-			assertEq(top->VexRiscv->writeBack_RegFilePlugin_regFileWrite_payload_data, ref[refIndex]);
+		if(top->v->writeBack_RegFilePlugin_regFileWrite_valid == 1 && top->v->writeBack_RegFilePlugin_regFileWrite_payload_address == 28){
+			assertEq(top->v->writeBack_RegFilePlugin_regFileWrite_payload_data, ref[refIndex]);
 			//printf("%d\n",i);
 
 			refIndex++;
@@ -1292,18 +1292,18 @@ public:
 
 	virtual void postReset() {
 //		#ifdef CSR
-//		top->VexRiscv->prefetch_PcManagerSimplePlugin_pcReg = 0x80000000u;
+//		top->v->prefetch_PcManagerSimplePlugin_pcReg = 0x80000000u;
 //		#else
 //		#endif
 	}
 
 	virtual void checks(){
-		if(top->VexRiscv->writeBack_INSTRUCTION == 0x00000073){
+		if(top->v->writeBack_INSTRUCTION == 0x00000073){
 			uint32_t instruction;
 			bool error;
-			iBusAccess(top->VexRiscv->writeBack_PC, &instruction, &error);
+			iBusAccess(top->v->writeBack_PC, &instruction, &error);
 			if(instruction == 0x00000073){
-				uint32_t code = top->VexRiscv->RegFilePlugin_regFile[28];
+				uint32_t code = top->v->RegFilePlugin_regFile[28];
 				if((code & 1) == 0){
 					cout << "Wrong error code"<< endl;
 					fail();
