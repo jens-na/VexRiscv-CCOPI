@@ -12,5 +12,7 @@ script:
     - script/install-deps.sh
     - sbt test
     - sbt "test:run-main vexriscv.ccopi.GenVexRiscvWithCCOPI"
+    - cat VexRiscv.v
+    - sha256sum VexRiscv.v
     - cd src/test/cpp/verilator
     - make
