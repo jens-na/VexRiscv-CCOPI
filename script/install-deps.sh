@@ -8,6 +8,14 @@ cd isl-0.15
 make
 sudo make install
 
+# mpfr
+wget http://www.mpfr.org/mpfr-current/mpfr-4.0.1.tar.gz
+tar -xvf mpfr-4.0.1.tar.gz
+cd mpfr-4.0.1.tar.gz
+./configure
+make
+sudo make install
+
 # RISC-V toolchain (precompiled version)
 sudo apt-get install autoconf automake autotools-dev curl device-tree-compiler libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev
 curl -O -L "https://github.com/jens-na/riscv-tools-precompiled/blob/master/builds/build-rv32ima.tar.gz.[00-14]?raw=true"
