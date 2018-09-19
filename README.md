@@ -1,4 +1,5 @@
-VexRiscv-CCOPI===== 
+VexRiscv-CCOPI
+===== 
 
 CCOPI is a custom coprocessor interface for the RISC-V implementation VexRiscv. (WIP)
 
